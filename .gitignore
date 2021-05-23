@@ -2,3 +2,6 @@
 /server/app/static/
 /gbmm-tests/http-client.env.json
 /package-lock.json
+/venv/
+/node_modules/
+/.idea
