@@ -1,0 +1,37 @@
+from flask import Blueprint
+from sqlalchemy import select
+
+from server.app.flask_helpers import dump, ok, api_key_required
+from server.gb_api import GBAPI
+from server.database import Session, from_api, VideoShow
+from config import config
+
+bp = Blueprint('video_shows', config.SERVER_NAME, url_prefix='/api/video-shows')
+
+
+@bp.route('/refresh-all', methods=('GET',))
+@api_key_required
+def refresh_all():
+    s = GBAPI.select('video_show')
+    show_results = s.next()
+    while not s.is_last_page:
+        show_results += s.next()
+
+    with Session.begin() as session:
+        shows = from_api(session, VideoShow, show_results)
+        for show in shows:
+            session.add(show)
+
+    return ok()
+
+
+@bp.route('/get-all', methods=('GET',))
+@api_key_required
+def get_all():
+    with Session.begin() as session:
+        shows_results = session.execute(
+            select(VideoShow)
+            .order_by(VideoShow.title.asc())
+        ).scalars().all()
+
+        return dump(shows_results)

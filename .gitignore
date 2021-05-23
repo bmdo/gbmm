@@ -1,0 +1,4 @@
+/config.yaml
+/server/app/static/
+/gbdl-tests/http-client.env.json
+/package-lock.json

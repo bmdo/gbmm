@@ -1,0 +1,7 @@
+POST http://{{host}}:{{port}}/download/single
+Content-Type: application/json
+
+{
+  "id": 998,
+  "object_type": "video"
+}

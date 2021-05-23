@@ -1,0 +1,10 @@
+.bi {
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.btn .bi {
+  margin-left: 0.5rem;
+}
+
+/*# sourceMappingURL=bi.css.map */
