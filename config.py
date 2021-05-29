@@ -57,9 +57,12 @@ class ConfigFile:
         self.dict = None
 
     def load(self):
-        with open(self.path, 'r') as stream:
-            self.dict = yaml.safe_load(stream)
-            return self.dict
+        try:
+            with open(self.path, 'r') as stream:
+                self.dict = yaml.safe_load(stream)
+                return self.dict
+        except OSError:
+            return None
 
     def save(self, c: 'Config'):
         with open(self.path, 'w') as stream:
@@ -274,26 +277,18 @@ class Config:
         """
         return self.__to_nested_ui_list(self.__dict)
 
-    def __init__(self, config_file: ConfigFile,
-                 *,
-                 file_root: str = None,
-                 db_dir: str = None,
-                 log_dir: str = None):
+    def __init__(self, config_file: ConfigFile):
         self.config_file = config_file
-        self.__dict = {}
-        self.__init_defaults(file_root, db_dir, log_dir)
-        self.__from_nested_value_dict(config_file.dict)
+        self.__init_defaults()
+        loaded_dict = config_file.load()
+        if loaded_dict is not None:
+            self.__from_nested_value_dict(loaded_dict)
+        self.save()
 
-    def __init_defaults(self,
-                        file_root: str = None,
-                        db_dir: str = None,
-                        log_dir: str = None):
-        if file_root is None:
-            file_root = 'files/'
-        if db_dir is None:
-            db_dir = 'db/'
-        if log_dir is None:
-            log_dir = 'log/'
+    def __init_defaults(self):
+        file_root = 'files/'
+        db_dir = 'db/'
+        log_dir = 'log/'
 
         self.__dict = {
             'api': {
@@ -394,6 +389,9 @@ class Config:
     def modify(self, address: str, value: any):
         """Update and save a configuration item."""
         self.get(address).update(value)
+        self.save()
+
+    def save(self):
         self.config_file.save(self)
 
     @staticmethod
@@ -408,23 +406,10 @@ class Config:
         return self.__get_address_from_dict(self.__dict, address)
 
 
-__file_root = None
-__db_dir = None
-__log_dir = None
-config = None
-
 config_full_path = os.path.join(_server_root(), ConfigStatic.CONFIG_FILE_NAME)
 config_file = ConfigFile(config_full_path)
-
 try:
-    config_file.load()
     config = Config(config_file)
-except OSError:
-    config = Config(
-        config_file,
-        file_root=__file_root,
-        db_dir=__db_dir,
-        log_dir=__log_dir
-    )
-    config_file.save(config)
-repr(config)
+except FileNotFoundError:
+    logging.error('Cannot create config file. Make sure the /app directory exists, or set environment variable '
+                  'GBMM_ROOT to an existing directory where you would like gbmm app data to be stored.')
