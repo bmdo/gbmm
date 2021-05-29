@@ -12,6 +12,15 @@ class ConfigValueError(ConfigError):
     pass
 
 
+def _server_root():
+    try:
+        path = os.environ['GBMM_ROOT']
+    except KeyError:
+        path = '/app'
+
+    return os.path.abspath(path)
+
+
 def _convert_log_level(log_level: str):
     if log_level == 'CRITICAL' or log_level == '50':
         return logging.CRITICAL
@@ -40,8 +49,6 @@ class ConfigStatic:
     API_KEY_REGEX = '^([0-9]|[a-f]){40}$'
 
     HEADERS = {'user-agent': f'{SERVER_NAME}/{SERVER_VERSION}'}
-
-    SERVER_ROOT = os.environ['GBMM_ROOT'] if os.environ['GBMM_ROOT'] is not None else '/app'
 
 
 class ConfigFile:
@@ -195,7 +202,7 @@ class Config:
         """
         The root directory used for the gbmm server. Contains web application files and optionally databases and logs.
         """
-        return os.path.abspath(ConfigStatic.SERVER_ROOT)
+        return _server_root()
 
     @property
     def API_VERSION(self):
@@ -406,7 +413,7 @@ __db_dir = None
 __log_dir = None
 config = None
 
-config_full_path = os.path.join(ConfigStatic.SERVER_ROOT, ConfigStatic.CONFIG_FILE_NAME)
+config_full_path = os.path.join(_server_root(), ConfigStatic.CONFIG_FILE_NAME)
 config_file = ConfigFile(config_full_path)
 
 try:
