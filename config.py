@@ -286,7 +286,11 @@ class Config:
         self.save()
 
     def __init_defaults(self):
-        file_root = 'files/'
+        try:
+            file_root = os.environ['GBMM_FILES']
+        except KeyError:
+            file_root = 'files/'
+
         db_dir = 'db/'
         log_dir = 'log/'
 
