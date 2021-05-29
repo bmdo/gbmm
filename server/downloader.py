@@ -20,8 +20,6 @@ class DownloadFailedError(Exception):
 
 
 class Downloader:
-    api_key_field = config.API_KEY_FIELD
-    api_key = config.API_KEY
     headers = config.HEADERS
     chunk_size = 10 * 1024 * 1024  # 10 MB
 
@@ -33,8 +31,8 @@ class Downloader:
         self.__daemon = threading.Thread(target=self.__processor, daemon=True).start()
 
     @staticmethod
-    def __build_api_key_string():
-        return f'?{Downloader.api_key_field}={Downloader.api_key}'
+    def __api_key_string():
+        return f'?{config.API_KEY_FIELD}={config.API_KEY}'
 
     def __peek_download(self):
         with self.session:
@@ -81,7 +79,7 @@ class Downloader:
         try:
             self.session.add(download)
             download.status = Download.DownloadStatus.IN_PROGRESS
-            url = f'{download.url}{Downloader.__build_api_key_string()}'
+            url = f'{download.url}{Downloader.__api_key_string}'
             entity_type = database.get_entity_class_by_item_name(download.obj_item_name)
             if download.obj_id is None:
                 raise ValueError('Object ID is None.')
