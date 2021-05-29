@@ -9,20 +9,23 @@ from config import config
 bp = Blueprint('video_shows', config.SERVER_NAME, url_prefix='/api/video-shows')
 
 
-@bp.route('/refresh-all', methods=('GET',))
-@api_key_required
-def refresh_all():
+def refresh_shows(session):
     s = GBAPI.select('video_show')
     show_results = s.next()
     while not s.is_last_page:
         show_results += s.next()
 
-    with Session.begin() as session:
-        shows = from_api(session, VideoShow, show_results)
-        for show in shows:
-            session.add(show)
+    shows = from_api(session, VideoShow, show_results)
+    for show in shows:
+        session.add(show)
 
-    return ok()
+
+@bp.route('/refresh-all', methods=('GET',))
+@api_key_required
+def refresh_all():
+    with Session.begin() as session:
+        refresh_shows(session)
+        return ok()
 
 
 @bp.route('/get-all', methods=('GET',))

@@ -11,10 +11,7 @@ bp = Blueprint('startup', config.SERVER_NAME, url_prefix='/api/startup')
 def run():
     with Session.begin() as session:
         Setting.set(session, 'startup_initiated', 'True')
-        shows_result = video_shows.refresh_all()
-        categories_result = video_categories.refresh_all()
-        if is_ok(shows_result) and is_ok(categories_result):
-            Setting.set(session, 'startup_complete', 'True')
-            return ok()
-        else:
-            return unavailable()
+        shows_result = video_shows.refresh_shows(session)
+        categories_result = video_categories.refresh_categories(session)
+        Setting.set(session, 'startup_complete', 'True')
+        return ok()

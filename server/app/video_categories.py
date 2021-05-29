@@ -9,20 +9,23 @@ from config import config
 bp = Blueprint('video_categories', config.SERVER_NAME, url_prefix='/api/video-categories')
 
 
-@bp.route('/refresh-all', methods=('GET',))
-@api_key_required
-def refresh_all():
+def refresh_categories(session):
     s = GBAPI.select('video_category')
     categories_results = s.next()
     while not s.is_last_page:
         categories_results += s.next()
 
-    with Session.begin() as session:
-        categories = from_api(session, VideoCategory, categories_results)
-        for category in categories:
-            session.add(category)
+    categories = from_api(session, VideoCategory, categories_results)
+    for category in categories:
+        session.add(category)
 
-    return ok()
+
+@bp.route('/refresh-all', methods=('GET',))
+@api_key_required
+def refresh_all():
+    with Session.begin() as session:
+        refresh_categories(session)
+        return ok()
 
 
 @bp.route('/get-all', methods=('GET',))
