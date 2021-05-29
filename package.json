@@ -34,5 +34,5 @@
     "build": "webpack"
   },
   "author": "Ben Doherty",
-  "license": "ISC"
+  "license": "GPL-3.0-or-later"
 }
