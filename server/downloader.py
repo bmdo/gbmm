@@ -79,7 +79,7 @@ class Downloader:
         try:
             self.session.add(download)
             download.status = Download.DownloadStatus.IN_PROGRESS
-            url = f'{download.url}{Downloader.__api_key_string}'
+            url = f'{download.url}{Downloader.__api_key_string()}'
             entity_type = database.get_entity_class_by_item_name(download.obj_item_name)
             if download.obj_id is None:
                 raise ValueError('Object ID is None.')
