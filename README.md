@@ -4,7 +4,7 @@
 ## Setup
 
 ### Docker
-Set up of the gbmm Docker image is easiest. Head to the <a href="https://hub.docker.com/repository/docker/bmdo/gbmm">Docker Hub page</a> and pull the image to get set up quickly.
+Set up of the gbmm Docker image is easiest. Head to the <a href="https://hub.docker.com/r/bmdo/gbmm">Docker Hub page</a> and pull the image to get set up quickly.
 
 ### API Key
 A Giant Bomb API key is required to set up gbmm. gbmm will prompt you for an API key on first startup.
