@@ -209,7 +209,7 @@ export default class VideosBrowse extends GbmmVue {
 </script>
 
 <style lang="sass" scoped>
-@use '/server/app/core/core' as core
+@use '../../core/core' as core
 #filters
   width: 16rem
 
