@@ -115,8 +115,14 @@ class Downloader:
             response = requests.get(url, headers=Downloader.headers, stream=True)
 
             self.logger.debug(f'Response headers:\n{response.headers}')
-
             download.response_headers = response.headers
+
+            if not response.ok:
+                download.status = Download.DownloadStatus.FAILED
+                download.failed_reason = f'Bad response from request to download URL: {response.status_code}'
+                self.session.commit()
+                return
+
             progress_bar = tqdm(total=download.size_bytes, unit='iB', unit_scale=True)
 
             self.logger.debug(f'Beginning content stream. Chunk size {Downloader.chunk_size}.')
