@@ -3,8 +3,6 @@ import logging
 import os
 from marshmallow import Schema, fields
 
-CONFIG_FILE_PATH = 'config.yaml'
-
 
 class ConfigError(IOError):
     pass
@@ -30,6 +28,8 @@ def _convert_log_level(log_level: str):
 
 
 class ConfigStatic:
+    CONFIG_FILE_NAME = 'config.yaml'
+
     SERVER_NAME = 'gbmm'
     SERVER_VERSION = '0.1.0'
 
@@ -45,14 +45,17 @@ class ConfigStatic:
 
 
 class ConfigFile:
-    @staticmethod
-    def load(config_file_path: str):
-        with open(config_file_path, 'r') as stream:
-            return yaml.safe_load(stream)
+    def __init__(self, path: str):
+        self.path = path
+        self.dict = None
 
-    @staticmethod
-    def save(c: 'Config', config_file_path: str):
-        with open(config_file_path, 'w') as stream:
+    def load(self):
+        with open(self.path, 'r') as stream:
+            self.dict = yaml.safe_load(stream)
+            return self.dict
+
+    def save(self, c: 'Config'):
+        with open(self.path, 'w') as stream:
             yaml.safe_dump(c.dump_values(), stream)
 
 
@@ -264,25 +267,20 @@ class Config:
         """
         return self.__to_nested_ui_list(self.__dict)
 
-    def __init__(self, *,
-                 config_dict: dict = None,
-                 server_root: str = None,
+    def __init__(self, config_file: ConfigFile,
+                 *,
                  file_root: str = None,
                  db_dir: str = None,
                  log_dir: str = None):
+        self.config_file = config_file
         self.__dict = {}
-        self.__init_defaults(server_root, file_root, db_dir, log_dir)
-        if config_dict is not None:
-            self.__from_nested_value_dict(config_dict)
+        self.__init_defaults(file_root, db_dir, log_dir)
+        self.__from_nested_value_dict(config_file.dict)
 
     def __init_defaults(self,
-                        server_root: str = None,
                         file_root: str = None,
                         db_dir: str = None,
                         log_dir: str = None):
-
-        if server_root is None:
-            server_root = './'
         if file_root is None:
             file_root = 'files/'
         if db_dir is None:
@@ -389,7 +387,7 @@ class Config:
     def modify(self, address: str, value: any):
         """Update and save a configuration item."""
         self.get(address).update(value)
-        ConfigFile.save(self, CONFIG_FILE_PATH)
+        self.config_file.save(self)
 
     @staticmethod
     def __get_address_from_dict(d: dict, address: str) -> ConfigItem:
@@ -403,22 +401,23 @@ class Config:
         return self.__get_address_from_dict(self.__dict, address)
 
 
-
-__server_root = None
 __file_root = None
 __db_dir = None
 __log_dir = None
 config = None
 
+config_full_path = os.path.join(ConfigStatic.SERVER_ROOT, ConfigStatic.CONFIG_FILE_NAME)
+config_file = ConfigFile(config_full_path)
+
 try:
-    __config_dict = ConfigFile.load(CONFIG_FILE_PATH)
-    config = Config(config_dict=__config_dict)
+    config_file.load()
+    config = Config(config_file)
 except OSError:
     config = Config(
-        server_root=__server_root,
+        config_file,
         file_root=__file_root,
         db_dir=__db_dir,
         log_dir=__log_dir
     )
-    ConfigFile.save(config, CONFIG_FILE_PATH)
+    config_file.save(config)
 repr(config)
