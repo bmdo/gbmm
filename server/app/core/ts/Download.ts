@@ -1,7 +1,7 @@
 import Progress from './Progress';
 import File from "./File";
-import API, {validResponseData} from "./gbdlapi/API";
-import {DownloadEnqueueParams, DownloadResponseData, DownloadsGetFilters} from "./gbdlapi/DownloadsAPI";
+import API, {validResponseData} from "./gbmmapi/API";
+import {DownloadEnqueueParams, DownloadResponseData, DownloadsGetFilters} from "./gbmmapi/DownloadsAPI";
 import Loadable from "./Loadable";
 import Definitions from "./Definitions";
 import ResultList from "./ResultList";

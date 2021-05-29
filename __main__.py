@@ -63,7 +63,7 @@ class CommandLineInterface:
         console_handler.setLevel(self.general_switches.console_log_level)
         console_handler.name = 'console'
         logging.getLogger().handlers.clear()
-        logger = logging.getLogger('gbdl-cli')
+        logger = logging.getLogger('gbmm-cli')
         logger.addHandler(console_handler)
         return logger
 

@@ -1,11 +1,11 @@
 import Loadable from "./Loadable";
 import Definitions from "./Definitions";
-import {ImageResponseData} from "./gbdlapi/ImagesAPI";
-import API, {validResponseData} from "./gbdlapi/API";
-import VideoShowsAPI, {VideoShowResponseData} from "./gbdlapi/VideoShowsAPI";
+import {ImageResponseData} from "./gbmmapi/ImagesAPI";
+import API, {validResponseData} from "./gbmmapi/API";
+import VideoShowsAPI, {VideoShowResponseData} from "./gbmmapi/VideoShowsAPI";
 import Video from "./Video";
 import ResultList from "./ResultList";
-import {VideoCategoryResponseData} from "./gbdlapi/VideoCategoriesAPI";
+import {VideoCategoryResponseData} from "./gbmmapi/VideoCategoriesAPI";
 
 export default class VideoCategory extends Loadable {
     /** URL pointing to the video_category detail resource. */

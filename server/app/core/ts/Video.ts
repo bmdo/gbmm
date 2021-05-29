@@ -1,6 +1,6 @@
-import API, {validResponseData} from "./gbdlapi/API";
-import {VideoResponseData, VideosBrowseFilters, VideosGetFilters} from "./gbdlapi/VideosAPI";
-import {DownloadResponseData, DownloadsGetFilters} from "./gbdlapi/DownloadsAPI";
+import API, {validResponseData} from "./gbmmapi/API";
+import {VideoResponseData, VideosBrowseFilters, VideosGetFilters} from "./gbmmapi/VideosAPI";
+import {DownloadResponseData, DownloadsGetFilters} from "./gbmmapi/DownloadsAPI";
 import Loadable from "./Loadable";
 import Download from "./Download";
 import Definitions from "./Definitions";

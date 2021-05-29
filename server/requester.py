@@ -28,7 +28,7 @@ class Request:
 
 class Requester:
     def __init__(self):
-        self.logger = logging.getLogger('gbdl').getChild('requester')
+        self.logger = logging.getLogger('gbmm').getChild('requester')
         self.__queue: [Request] = []
         self.__queue_lock = threading.Lock()
         self.__queue_pushed_condition = threading.Condition(self.__queue_lock)

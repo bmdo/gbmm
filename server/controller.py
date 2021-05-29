@@ -5,7 +5,7 @@ from server.gb_api import resources
 
 class Controller:
     def __init__(self):
-        self.logger = logging.getLogger('gbdl').getChild('controller')
+        self.logger = logging.getLogger('gbmm').getChild('controller')
 
     def get_collection_resource(self, item_name: str):
         return resources.collection_resources.get_resource_by_item_name(item_name)

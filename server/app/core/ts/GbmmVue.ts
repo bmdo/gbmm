@@ -30,7 +30,7 @@ export default class GbmmVue extends Vue {
     public static setDOMTitle() {
         let first = GbmmVue.pageTitle_ !== '' ?? '' ? `${GbmmVue.pageTitle_} • ` : ''
         let second = GbmmVue.areaTitle_ !== '' ?? '' ? `${GbmmVue.areaTitle_} • ` : ''
-        document.title = `${first}${second}gbdl`;
+        document.title = `${first}${second}gbmm`;
     }
 
     public loaded_(...l: Loadable[]) {

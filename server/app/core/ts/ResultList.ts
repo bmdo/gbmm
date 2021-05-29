@@ -1,4 +1,4 @@
-import {MultipleResponseData, MultipleResponseMetadata, ResponseData} from "./gbdlapi/API";
+import {MultipleResponseData, MultipleResponseMetadata, ResponseData} from "./gbmmapi/API";
 import Definitions from "./Definitions";
 
 export default class ResultList<T> extends Array<T> {

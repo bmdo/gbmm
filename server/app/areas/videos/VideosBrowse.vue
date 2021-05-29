@@ -77,7 +77,7 @@ import Video from "../../core/ts/Video";
 import GbmmVue from "../../core/ts/GbmmVue";
 import VideosFilterPanel from "./components/VideosFilterPanel.vue";
 import FilterCollection from "../../core/ts/FilterCollection";
-import {VideosBrowseFilters} from "../../core/ts/gbdlapi/VideosAPI";
+import {VideosBrowseFilters} from "../../core/ts/gbmmapi/VideosAPI";
 import {SortOption} from "../../core/ts/Sort";
 import IconButton from "../../core/components/IconButton.vue";
 import Download from "../../core/ts/Download";

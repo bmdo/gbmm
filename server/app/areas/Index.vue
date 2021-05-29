@@ -35,7 +35,7 @@ import {Component, Watch} from "vue-property-decorator";
 import Navbar from "./Navbar.vue";
 import Footer from "./Footer.vue";
 import GbmmVue from "../core/ts/GbmmVue";
-import API from "../core/ts/gbdlapi/API";
+import API from "../core/ts/gbmmapi/API";
 import Welcome from "./welcome/Welcome.vue";
 import Icon from "../core/components/Icon.vue";
 

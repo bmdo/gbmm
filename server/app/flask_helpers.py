@@ -53,7 +53,7 @@ def not_found(msg: str = 'Page not found') -> Response:
 
 
 def bad_request(msg: str = None, exception: Exception = None) -> Response:
-    logger = logging.getLogger('gbdl')
+    logger = logging.getLogger('gbmm')
     if msg is not None:
         logger.warning(msg)
     if exception is not None:

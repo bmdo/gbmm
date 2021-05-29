@@ -1,6 +1,6 @@
 import DownloadStatuses from "./DownloadStatuses";
-import {DefinitionsResponseData} from "./gbdlapi/DefinitionsAPI";
-import API, {ResponsePromise, validResponseData} from "./gbdlapi/API";
+import {DefinitionsResponseData} from "./gbmmapi/DefinitionsAPI";
+import API, {ResponsePromise, validResponseData} from "./gbmmapi/API";
 
 export default class Definitions {
     public downloadStatuses: DownloadStatuses

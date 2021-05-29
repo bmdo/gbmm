@@ -138,7 +138,7 @@ class Table:
                  database: 'Database',
                  name: str,
                  columns: list[ColumnDefinition]):
-        self.logger = logging.getLogger('gbdl.database').getChild('table')
+        self.logger = logging.getLogger('gbmm.database').getChild('table')
         self.name: str = name
         self.columns: list[ColumnDefinition] = columns
         self.database: 'Database' = database
@@ -862,7 +862,7 @@ class Query:
 
 class QueryManager:
     def __init__(self):
-        self.logger = logging.getLogger('gbdl.database').getChild('querymanager')
+        self.logger = logging.getLogger('gbmm.database').getChild('querymanager')
 
         self.__connection = None
         self.__cursor = None
@@ -952,7 +952,7 @@ class QueryManager:
 
 class Database:
     def __init__(self, api_objects: ApiObjects):
-        self.logger = logging.getLogger('gbdl').getChild('database')
+        self.logger = logging.getLogger('gbmm').getChild('database')
 
         self.api_objects = api_objects
         self.query_manager = QueryManager()

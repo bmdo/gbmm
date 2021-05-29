@@ -1,5 +1,5 @@
 import Download from "./Download";
-import {FileResponseData} from "./gbdlapi/FilesAPI";
+import {FileResponseData} from "./gbmmapi/FilesAPI";
 import Definitions from "./Definitions";
 
 export default class File {

@@ -16,7 +16,7 @@ import InputText from "../../core/components/InputText.vue";
 import InputModel from "../../core/ts/InputModel";
 import ValidatorFactory from "../../core/ts/Validator";
 import GbmmVue from "../../core/ts/GbmmVue";
-import API from "../../core/ts/gbdlapi/API";
+import API from "../../core/ts/gbmmapi/API";
 
 @Component({
   components: {InputText}

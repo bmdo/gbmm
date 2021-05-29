@@ -1,4 +1,4 @@
-import {DownloadStatusesResponseData} from "./gbdlapi/DefinitionsAPI";
+import {DownloadStatusesResponseData} from "./gbmmapi/DefinitionsAPI";
 
 export default class DownloadStatuses {
     public QUEUED: number

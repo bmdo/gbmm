@@ -1,7 +1,7 @@
 import Loadable from "./Loadable";
-import {ImageResponseData} from "./gbdlapi/ImagesAPI";
-import API, {validResponseData} from "./gbdlapi/API";
-import {VideoShowResponseData} from "./gbdlapi/VideoShowsAPI";
+import {ImageResponseData} from "./gbmmapi/ImagesAPI";
+import API, {validResponseData} from "./gbmmapi/API";
+import {VideoShowResponseData} from "./gbmmapi/VideoShowsAPI";
 import ResultList from "./ResultList";
 
 export default class VideoShow extends Loadable {

@@ -26,7 +26,7 @@ class Downloader:
     chunk_size = 10 * 1024 * 1024  # 10 MB
 
     def __init__(self):
-        self.logger = logging.getLogger('gbdl').getChild('downloader')
+        self.logger = logging.getLogger('gbmm').getChild('downloader')
         self.__download_pushed_condition = threading.Condition()
         self.logger.debug('Starting downloader daemon')
         self.session = Session()

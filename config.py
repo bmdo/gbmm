@@ -188,7 +188,7 @@ class Config:
     @property
     def SERVER_ROOT(self):
         """
-        The root directory used for the gbdl server. Contains web application files and optionally databases and logs.
+        The root directory used for the gbmm server. Contains web application files and optionally databases and logs.
         """
         v = self.get('server root').value
         return os.path.abspath(v)
@@ -206,7 +206,7 @@ class Config:
     @property
     def DATABASE_DIR(self):
         """
-        The directory where gbdl stores sqlite databases. If not an absolute path, this is relative to SERVER_ROOT.
+        The directory where gbmm stores sqlite databases. If not an absolute path, this is relative to SERVER_ROOT.
         """
         v = self.get('database.directory').value
         return v if os.path.isabs(v) else os.path.join(self.SERVER_ROOT, v)
@@ -225,7 +225,7 @@ class Config:
 
     @property
     def LOG_DIR(self):
-        """The directory where gbdl stores logs. If not an absolute path, this is relative to SERVER_ROOT."""
+        """The directory where gbmm stores logs. If not an absolute path, this is relative to SERVER_ROOT."""
         v = self.get('logging.directory').value
         return v if os.path.isabs(v) else os.path.join(self.SERVER_ROOT, v)
 
@@ -292,7 +292,7 @@ class Config:
         self.__dict = {
             'server root':
                 CStr(server_root,
-                     helptext='The root directory used for the gbdl server. Contains web application files and '
+                     helptext='The root directory used for the gbmm server. Contains web application files and '
                               'optionally databases and logs.'),
             'api': {
                 'key':
@@ -309,7 +309,7 @@ class Config:
             'database': {
                 'directory':
                     CStr(db_dir,
-                         helptext='The directory where gbdl stores sqlite databases. If not an absolute path, this is '
+                         helptext='The directory where gbmm stores sqlite databases. If not an absolute path, this is '
                                   'relative to the server root.'),
                 'name':
                     CStr(f'{ConfigStatic.SERVER_NAME}.db',
@@ -318,7 +318,7 @@ class Config:
             'logging': {
                 'directory':
                     CStr(log_dir, mutable_runtime=True,
-                         helptext='The directory where gbdl stores logs. If not an absolute path, this is relative to '
+                         helptext='The directory where gbmm stores logs. If not an absolute path, this is relative to '
                                   'the server root.'),
                 'name':
                     CStr(f'{ConfigStatic.SERVER_NAME}.log', mutable_runtime=True,
