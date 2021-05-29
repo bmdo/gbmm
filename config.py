@@ -290,10 +290,6 @@ class Config:
             log_dir = 'log/'
 
         self.__dict = {
-            'server root':
-                CStr(server_root,
-                     helptext='The root directory used for the gbmm server. Contains web application files and '
-                              'optionally databases and logs.'),
             'api': {
                 'key':
                     CStr('', mutable_runtime=True,
