@@ -41,6 +41,8 @@ class ConfigStatic:
 
     HEADERS = {'user-agent': f'{SERVER_NAME}/{SERVER_VERSION}'}
 
+    SERVER_ROOT = os.environ['GBMM_ROOT'] if os.environ['GBMM_ROOT'] is not None else '/app'
+
 
 class ConfigFile:
     @staticmethod
@@ -190,8 +192,7 @@ class Config:
         """
         The root directory used for the gbmm server. Contains web application files and optionally databases and logs.
         """
-        v = self.get('server root').value
-        return os.path.abspath(v)
+        return os.path.abspath(ConfigStatic.SERVER_ROOT)
 
     @property
     def API_VERSION(self):
