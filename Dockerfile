@@ -12,4 +12,8 @@ RUN pip3 install -r ./requirements.txt
 COPY --from=0 /gbmm .
 COPY config_docker.yaml config.yaml
 
+ENV LISTEN_HOST='0.0.0.0'
+ENV LISTEN_PORT=5000
+EXPOSE 5000/tcp
+
 CMD ["python3", "-m", "flask", "run", "--no-reload", "--with-threads"]
