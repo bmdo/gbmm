@@ -12,7 +12,6 @@ ENV GBMM_FILES='/data'
 COPY requirements.txt ./requirements.txt
 RUN pip3 install -r ./requirements.txt
 COPY --from=0 /gbmm .
-COPY config_docker.yaml config.yaml
 
 EXPOSE 5000/tcp
 
