@@ -3,8 +3,6 @@ import logging
 import os
 from marshmallow import Schema, fields
 
-CONFIG_FILE_PATH = 'config.yaml'
-
 
 class ConfigError(IOError):
     pass
@@ -12,6 +10,15 @@ class ConfigError(IOError):
 
 class ConfigValueError(ConfigError):
     pass
+
+
+def _server_root():
+    try:
+        path = os.environ['GBMM_ROOT']
+    except KeyError:
+        path = '/app'
+
+    return os.path.abspath(path)
 
 
 def _convert_log_level(log_level: str):
@@ -30,6 +37,8 @@ def _convert_log_level(log_level: str):
 
 
 class ConfigStatic:
+    CONFIG_FILE_NAME = 'config.yaml'
+
     SERVER_NAME = 'gbmm'
     SERVER_VERSION = '0.1.0'
 
@@ -43,14 +52,20 @@ class ConfigStatic:
 
 
 class ConfigFile:
-    @staticmethod
-    def load(config_file_path: str):
-        with open(config_file_path, 'r') as stream:
-            return yaml.safe_load(stream)
+    def __init__(self, path: str):
+        self.path = path
+        self.dict = None
 
-    @staticmethod
-    def save(c: 'Config', config_file_path: str):
-        with open(config_file_path, 'w') as stream:
+    def load(self):
+        try:
+            with open(self.path, 'r') as stream:
+                self.dict = yaml.safe_load(stream)
+                return self.dict
+        except OSError:
+            return None
+
+    def save(self, c: 'Config'):
+        with open(self.path, 'w') as stream:
             yaml.safe_dump(c.dump_values(), stream)
 
 
@@ -190,8 +205,7 @@ class Config:
         """
         The root directory used for the gbmm server. Contains web application files and optionally databases and logs.
         """
-        v = self.get('server root').value
-        return os.path.abspath(v)
+        return _server_root()
 
     @property
     def API_VERSION(self):
@@ -263,37 +277,20 @@ class Config:
         """
         return self.__to_nested_ui_list(self.__dict)
 
-    def __init__(self, *,
-                 config_dict: dict = None,
-                 server_root: str = None,
-                 file_root: str = None,
-                 db_dir: str = None,
-                 log_dir: str = None):
-        self.__dict = {}
-        self.__init_defaults(server_root, file_root, db_dir, log_dir)
-        if config_dict is not None:
-            self.__from_nested_value_dict(config_dict)
+    def __init__(self, config_file: ConfigFile):
+        self.config_file = config_file
+        self.__init_defaults()
+        loaded_dict = config_file.load()
+        if loaded_dict is not None:
+            self.__from_nested_value_dict(loaded_dict)
+        self.save()
 
-    def __init_defaults(self,
-                        server_root: str = None,
-                        file_root: str = None,
-                        db_dir: str = None,
-                        log_dir: str = None):
-
-        if server_root is None:
-            server_root = './'
-        if file_root is None:
-            file_root = 'files/'
-        if db_dir is None:
-            db_dir = 'db/'
-        if log_dir is None:
-            log_dir = 'log/'
+    def __init_defaults(self):
+        file_root = 'files/'
+        db_dir = 'db/'
+        log_dir = 'log/'
 
         self.__dict = {
-            'server root':
-                CStr(server_root,
-                     helptext='The root directory used for the gbmm server. Contains web application files and '
-                              'optionally databases and logs.'),
             'api': {
                 'key':
                     CStr('', mutable_runtime=True,
@@ -392,7 +389,10 @@ class Config:
     def modify(self, address: str, value: any):
         """Update and save a configuration item."""
         self.get(address).update(value)
-        ConfigFile.save(self, CONFIG_FILE_PATH)
+        self.save()
+
+    def save(self):
+        self.config_file.save(self)
 
     @staticmethod
     def __get_address_from_dict(d: dict, address: str) -> ConfigItem:
@@ -406,22 +406,10 @@ class Config:
         return self.__get_address_from_dict(self.__dict, address)
 
 
-
-__server_root = None
-__file_root = None
-__db_dir = None
-__log_dir = None
-config = None
-
+config_full_path = os.path.join(_server_root(), ConfigStatic.CONFIG_FILE_NAME)
+config_file = ConfigFile(config_full_path)
 try:
-    __config_dict = ConfigFile.load(CONFIG_FILE_PATH)
-    config = Config(config_dict=__config_dict)
-except OSError:
-    config = Config(
-        server_root=__server_root,
-        file_root=__file_root,
-        db_dir=__db_dir,
-        log_dir=__log_dir
-    )
-    ConfigFile.save(config, CONFIG_FILE_PATH)
-repr(config)
+    config = Config(config_file)
+except FileNotFoundError:
+    logging.error('Cannot create config file. Make sure the /app directory exists, or set environment variable '
+                  'GBMM_ROOT to an existing directory where you would like gbmm app data to be stored.')

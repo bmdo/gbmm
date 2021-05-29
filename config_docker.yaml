@@ -11,4 +11,3 @@ logging:
   level: DEBUG
   max size: 1000
   name: gbmm.log
-server root: /app
