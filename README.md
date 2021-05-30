@@ -1,9 +1,17 @@
 <h1 style="text-align: center">gbmm</h1>
 <p style="text-align: center">A Giant Bomb media manager.</p>
 
+gbmm allows for browsing and downloading videos and their associated images from <a href="https://www.giantbomb.com/">Giant Bomb</a>.
+
+### Features
+* Video browser with filters and sorting
+* Ability to download videos from the video browser
+* Download queue
+* Metadata stored locally for entirely offline access to downloaded content
+
 ## Setup
 
-### Docker
+### Using Docker
 Set up of the gbmm Docker image is easiest. Head to the <a href="https://hub.docker.com/r/bmdo/gbmm">Docker Hub page</a> and pull the image to get set up quickly.
 
 #### Parameters
@@ -34,10 +42,13 @@ Set up of the gbmm Docker image is easiest. Head to the <a href="https://hub.doc
     </tr>
 </table>
 
-### Manual setup
+### Using a manual setup
 It's also possible to set up gbmm without Docker.
 
-#### Environment variables
+#### 1. Install python
+Download the latest version of Python 3 here: https://www.python.org/downloads/
+
+#### 2. Configure environment variables
 
 The following environment variables allow you to configure the storage location for gbmm data.
 
@@ -61,7 +72,18 @@ The following environment variables allow you to configure the storage location 
     </tr>
 </table>
 
+#### 3. Run the application
+
+<code>
+export FLASK_APP=server.app; python3 -m flask run --host=0.0.0.0
+</code>
+
 ### General setup notes
+#### Web server
+The docker image and setup instructions above currently use werkzeug, which is a server intended for development use. While probably OK for limited use, werkzeug is not a scalable web server.
+
+This is probably OK for a personal use application like gbmm, but you may want to <a href="https://flask.palletsprojects.com/en/2.0.x/deploying/">explore other options</a> if you want a more robust web server.
+
 
 #### API Key
 A Giant Bomb API key is required to set up gbmm. gbmm will prompt you for an API key on first startup.
@@ -75,13 +97,3 @@ Files are saved under a subdirectory tree created under the chosen media file st
 Notes on selecting a media file storage location:
 * It's best to create an empty directory for this location. It is possible gbmm will overwrite existing data in this directory if there are any preexisting files.
 * Choose a location plenty of storage space. Individual video files are frequently multiple gigabytes in size, and your storage usage can increase quickly when downloading many videos.
-
-## Overview
-
-gbmm allows for browsing and downloading videos and their associated images from <a href="https://www.giantbomb.com/">Giant Bomb</a>.
-
-### Features
-* Video browser with filters and sorting
-* Ability to download videos from the video browser
-* Download queue
-* Metadata stored locally for entirely offline access to downloaded content
