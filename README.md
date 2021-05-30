@@ -37,6 +37,30 @@ Set up of the gbmm Docker image is easiest. Head to the <a href="https://hub.doc
 ### Manual setup
 It's also possible to set up gbmm without Docker.
 
+#### Environment variables
+
+The following environment variables allow you to configure the storage location for gbmm data.
+
+<table>
+    <tr>
+        <td>
+            <code>GBMM_ROOT</code>
+        </td>
+        <td>
+            Root for application data storage, including database, log, and configuration file. Defaults to <code>/app</code>. If this directory does not exist, gbmm will fail to start.
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <code>GBMM_FILES</code>
+        </td>
+        <td>
+            <span>Media file storage location for storing videos, images, etc. Defaults to <code>./files</code> (relative to <code>GBMM_ROOT</code>).</span>
+            <span><strong>This is only used if you do not provide a config file with a valid file root.</strong> This is useful for configuring a desired file location on initial startup.</span>
+        </td>
+    </tr>
+</table>
+
 ### General setup notes
 
 #### API Key
