@@ -79,6 +79,9 @@ export FLASK_APP=server.app; python3 -m flask run --host=0.0.0.0
 </code>
 
 ### General setup notes
+#### Web UI
+Visit port 8877 (or the port you configured for your Docker container) to access the web UI. E.g., http://127.0.0.1:8877.
+
 #### Web server
 The docker image and setup instructions above currently use werkzeug, which is a server intended for development use. While probably OK for limited use, werkzeug is not a scalable web server.
 
