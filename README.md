@@ -1,5 +1,5 @@
-<h1 style="text-align: center">gbmm</h1>
-<p style="text-align: center">A Giant Bomb media manager</p>
+# gbmm
+A Giant Bomb media manager.
 
 gbmm allows for browsing and downloading videos and their associated images from <a href="https://www.giantbomb.com/">Giant Bomb</a>.
 
