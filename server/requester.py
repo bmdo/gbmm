@@ -92,6 +92,13 @@ class Requester:
                     daemon_logger.debug(f"Requester daemon received notification.")
 
     def request(self, url: str, priority: RequestPriority = RequestPriority.normal):
+        """
+        Enqueue a request and block until the request is made and a response is received.
+        :param url: The target URL of the request.
+        :param priority: The priority of the request. When there are multiple requests in the queue, the highest
+            priority request is always made first.
+        :return: The result of the request.
+        """
         new_request = Request(url, priority)
         self.logger.debug(f"Created request {new_request.request_id}.")
         with self.__queue_lock:

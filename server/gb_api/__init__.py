@@ -6,6 +6,7 @@ from marshmallow import Schema, fields, post_load
 from .resources import resources, SingleResultResource, MultipleResultResource
 from server.database import GBBase
 from .response_metadata import ResponseMetadata, ResponseMetadataSchema
+from ..requester import RequestPriority
 
 
 class APIError(Exception):
@@ -86,6 +87,10 @@ class ResourceSelect:
         self.filter(limit=limit)
         return self
 
+    def priority(self, priority: RequestPriority) -> 'ResourceSelect':
+        self.__resource.priority = priority
+        return self
+
     def next(self):
         self.__last_results = self.__resource.next()
         return self.__last_results
@@ -147,7 +152,7 @@ class GBAPI:
         return re.fullmatch(r'[0-9]+-[0-9]+', string) is not None
 
     @staticmethod
-    def get_one(obj_type_or_guid, obj_id: int = None):
+    def get_one(obj_type_or_guid, obj_id: int = None, priority: RequestPriority = RequestPriority.normal):
         """
         Queries the GB API for a single object and returns the result as a GBEntity object.
         :param obj_type_or_guid:
@@ -156,12 +161,14 @@ class GBAPI:
           - The python type of the object returned by the resource.
           - The GUID of the object as a string. When a GUID is provided, obj_id is not required.
         :param obj_id: The ID of the object. Not required when a GUID is provided as the first argument.
+        :param priority: The priority of the request.
         :return: The object returned by the GB API.
         """
 
         res: SingleResultResource
         guid: str
         res, guid = GBAPI.__get_resource(obj_type_or_guid, resources.item)
+        res.priority = priority
 
         if guid is not None:
             return res.get(guid=guid)

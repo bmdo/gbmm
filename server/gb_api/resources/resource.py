@@ -2,7 +2,7 @@ from typing import Optional, Type
 
 from config import config
 from server.database import GBEntity
-from server.requester import requester
+from server.requester import requester, RequestPriority
 from server.gb_api.response_metadata import ResponseMetadata
 
 from .resource_filter import ResourceFilterList
@@ -37,6 +37,8 @@ class Resource:
         '''The class representing the object or objects returned by this Resource.'''
         self.filters: ResourceFilterList = filters
         '''A list of all filter members available to this Resource.'''
+        self.priority: RequestPriority = RequestPriority.normal
+        '''The priority to set for requests made by this resource.'''
         self.base_url = config.API_BASE_URL
         '''The core portion of the API URL. This is the beginning of the URL up until the path.'''
         self.api_key = config.API_KEY
@@ -83,7 +85,7 @@ class Resource:
             self.__build_overridden_url()
         else:
             self.__build_url(guid)
-        self.response = requester.request(self.url)
+        self.response = requester.request(self.url, self.priority)
         self.last_response_metadata = ResponseMetadata(self.response)
         self.working_metadata = ResponseMetadata(self.response)
         self.results = self.response.results
@@ -106,6 +108,7 @@ class SingleResultResource(Resource):
         sending the request. If an override URL is set for this resource, the id and guid are ignored.
         :param id: The ID of the result to get.
         :param guid: The GUID of the result to get.
+        :param priority: The priority of the request.
         :return:
         """
         if id is not None:
