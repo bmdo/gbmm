@@ -15,4 +15,4 @@ COPY --from=0 /gbmm .
 
 EXPOSE 5000/tcp
 
-CMD ["python3", "-m", "flask", "run", "--host=0.0.0.0", "--no-reload", "--with-threads"]
+CMD ["python3", "-m", "flask", "run", "--host=0.0.0.0", "--port=8877"]
