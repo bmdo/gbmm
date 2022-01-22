@@ -10,7 +10,7 @@ class Marshmallowable:
         return self.__marshmallow_schema__().dump(self)
 
 
-class SettingSchema(Schema):
+class KeyValueSchema(Schema):
     id = fields.Int()
     key = fields.Str()
     value = fields.Str()

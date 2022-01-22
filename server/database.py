@@ -12,7 +12,7 @@ from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 from config import config
 from server.serialization import FileSchema, Marshmallowable, DownloadSchema, ImageSchema, VideoSchema, VideoShowSchema, \
-    SettingSchema, VideoCategorySchema
+    VideoCategorySchema, KeyValueSchema
 
 
 class DatabaseError(IOError):
@@ -43,6 +43,24 @@ db_url = f'sqlite+pysqlite:///{db_path}'
 engine = create_engine(db_url, future=True)
 Session = sessionmaker(engine)
 Base = declarative_base(cls=Base)
+
+
+class KeyValueBase:
+    @staticmethod
+    def get(session, key: str):
+        return session.execute(
+            select(Setting)
+            .filter_by(key=key)
+        ).scalars().first()
+
+    @staticmethod
+    def set(session, key: str, value: str):
+        setting = session.execute(
+            select(Setting)
+            .filter_by(key=key)
+        ).scalars().first()
+        setting.value = value
+        session.flush()
 
 
 class GBBase(Marshmallowable):
@@ -132,29 +150,22 @@ class GBEntity(GBBase):
         return f'{cls.__type_id__}-{id}'
 
 
-class Setting(Base, Marshmallowable):
+class Setting(Base, KeyValueBase, Marshmallowable):
     __tablename__ = 'setting'
-    __marshmallow_schema__ = SettingSchema
+    __marshmallow_schema__ = KeyValueSchema
     id = Column(Integer, primary_key=True)
     key = Column(String)
     value = Column(String)
     type = Column(String)
 
-    @staticmethod
-    def get(session, key: str):
-        return session.execute(
-            select(Setting)
-            .filter_by(key=key)
-        ).scalars().first()
 
-    @staticmethod
-    def set(session, key: str, value: str):
-        setting = session.execute(
-            select(Setting)
-            .filter_by(key=key)
-        ).scalars().first()
-        setting.value = value
-        session.flush()
+class System(Base, KeyValueBase, Marshmallowable):
+    __tablename__ = 'system'
+    __marshmallow_schema__ = KeyValueSchema
+    id = Column(Integer, primary_key=True)
+    key = Column(String)
+    value = Column(String)
+    type = Column(String)
 
 
 class File(Base, Marshmallowable):

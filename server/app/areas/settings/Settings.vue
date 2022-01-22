@@ -1,6 +1,6 @@
 <template>
     <div>
-        <h1 class="display-3 mb-5">{{ title }}</h1>
+        <h1 class="display-3 mb-5">{{ areaTitle }}</h1>
         <setting-group :group="generalGroup"></setting-group>
         <setting-group v-for="group in definedGroups" :group="group" :key="group.id"></setting-group>
         <button class="btn fw-500 w-100" @click="save" :class="{disabled: !modified}">Save</button>
