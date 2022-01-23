@@ -12,6 +12,7 @@ bp = Blueprint('system', config.SERVER_NAME, url_prefix='/api/system')
 
 
 __defaults = {
+    'id': 'SystemState',
     'db__version': '1.0',
     'first_time_setup__initiated': False,
     'first_time_setup__complete': False
@@ -19,23 +20,38 @@ __defaults = {
 
 
 def get_state(session: Session):
-    return session.execute(
+    """
+    Get the system state. If the system state has not yet been initialized, it will be initialized.
+
+    :param session: A SQLAlchemy session
+    :return: The system state
+    """
+    state = session.execute(
         select(SystemState)
-        .filter_by(id='SystemState')
+        .filter_by(id=__defaults.get('id'))
     ).scalars().first()
 
+    if state is None:
+        state = initialize_state(session)
 
-def initialize():
-    with Session.begin() as session:
-        state = get_state(session)
+    return state
 
-        if state is None:
-            state = SystemState(
-                db__version=__defaults.get('db__version'),
-                first_time_setup__initiated=__defaults.get('first_time_setup__initiated'),
-                first_time_setup__complete=__defaults.get('first_time_setup__complete')
-            )
-            session.add(state)
+
+def initialize_state(session: Session):
+    """
+    Initialize the system state to default values.
+
+    :param session: A SQLAlchemy session
+    :return: The system state
+    """
+    state = SystemState(
+        id=__defaults.get('id'),
+        db__version=__defaults.get('db__version'),
+        first_time_setup__initiated=__defaults.get('first_time_setup__initiated'),
+        first_time_setup__complete=__defaults.get('first_time_setup__complete')
+    )
+    session.add(state)
+    return state
 
 
 @bp.route('/first-time-startup-state', methods=('GET',))
