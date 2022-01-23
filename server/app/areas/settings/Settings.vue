@@ -1,9 +1,16 @@
 <template>
     <div>
         <h1 class="display-3 mb-5">{{ areaTitle }}</h1>
+        <div class="mb-5">
+            <h5 class="mb-3">System Controls</h5>
+            <label class="me-3 form-label fw-500">Update Index</label>
+            <small class="text-muted">Refresh the video index. A quick update pulls new videos since the last index update. A full update refreshes the full index. A full update can take several minutes.</small>
+            <icon-button :click="void(0)" :icon="'lightning-fill'" :text="'Quick Update'" class="btn-outline-primary me-2"></icon-button>
+            <icon-button :click="void(0)" :icon="'arrow-clockwise'" :text="'Full Update'" class="btn-outline-primary me-2"></icon-button>
+        </div>
         <setting-group :group="generalGroup"></setting-group>
         <setting-group v-for="group in definedGroups" :group="group" :key="group.id"></setting-group>
-        <button class="btn fw-500 w-100" @click="save" :class="{disabled: !modified}">Save</button>
+        <icon-button :click="save" :icon="'check2'" :text="'Save Changes'" :class="{disabled: !modified}" class="btn-primary float-end"></icon-button>
     </div>
 </template>
 
@@ -14,11 +21,12 @@ import SettingGroup from "./ts/SettingGroup";
 import SettingItem from "./ts/SettingItem";
 import {ISettingEntryData} from "./ts/SettingInterfaces";
 import SettingGroupComponent from "./components/SettingGroupComponent.vue";
+import IconButton from "../../core/components/IconButton.vue";
 import GbmmVue from "../../core/ts/GbmmVue";
 import API from "../../core/ts/gbmmapi/API";
 
 @Component({
-    components: {SettingGroup: SettingGroupComponent}
+    components: {IconButton, SettingGroup: SettingGroupComponent}
 })
 export default class Settings extends GbmmVue {
     public settings: ISettingEntryData[] = []
@@ -46,7 +54,6 @@ export default class Settings extends GbmmVue {
 
         API.settings.getAll()
             .then((response) => {
-                console.log(response);
                 this.settings = response.data.settings;
                 let general = this.settings.filter(item => item.item);
                 for (let entry of general) {
