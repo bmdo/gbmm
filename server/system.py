@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from sqlalchemy import select
 from server.gb_api import GBAPI, SortDirection
@@ -10,21 +11,24 @@ class IndexUpdateType(Enum):
     full = 1
 
 
+class SystemStateIndexer:
+    def __init__(self, last_update):
+        self.last_update: datetime
+
+
 class SystemState:
     def __init__(self):
-        self.indexer: SystemStateIndexer
+        # Constructor values are used for first-time initialization and in the event any settings do not
+        # exist in the database.
+        self._indexer__last_update: datetime = datetime.now()
+        self._indexer__in_progress: bool
+        self._indexer__total_results: int
+        self._indexer__processed_results: int
 
-    #convert_to_key_value():
 
-    #convert_from_key_value():
+def first_time_setup():
+    state = SystemState()
 
-
-class SystemStateIndexer:
-    def __init__(self):
-        self.last_update: int
-        self.in_progress: bool
-        self.total_results: int
-        self.processed_results: int
 
 
 def update_video_index(t: IndexUpdateType = IndexUpdateType.quick):

@@ -7,7 +7,7 @@ from typing import Type, Callable
 
 from marshmallow import Schema
 from requests.structures import CaseInsensitiveDict
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, ForeignKey, select
+from sqlalchemy import create_engine, Column, Boolean, Integer, String, DateTime, ForeignKey, select
 from sqlalchemy.orm import declarative_base, relationship, sessionmaker
 
 from config import config
@@ -43,24 +43,6 @@ db_url = f'sqlite+pysqlite:///{db_path}'
 engine = create_engine(db_url, future=True)
 Session = sessionmaker(engine)
 Base = declarative_base(cls=Base)
-
-
-class KeyValueBase:
-    @staticmethod
-    def get(session, key: str):
-        return session.execute(
-            select(Setting)
-            .filter_by(key=key)
-        ).scalars().first()
-
-    @staticmethod
-    def set(session, key: str, value: str):
-        setting = session.execute(
-            select(Setting)
-            .filter_by(key=key)
-        ).scalars().first()
-        setting.value = value
-        session.flush()
 
 
 class GBBase(Marshmallowable):
@@ -150,7 +132,7 @@ class GBEntity(GBBase):
         return f'{cls.__type_id__}-{id}'
 
 
-class Setting(Base, KeyValueBase, Marshmallowable):
+class Setting(Base, Marshmallowable):
     __tablename__ = 'setting'
     __marshmallow_schema__ = KeyValueSchema
     id = Column(Integer, primary_key=True)
@@ -158,14 +140,31 @@ class Setting(Base, KeyValueBase, Marshmallowable):
     value = Column(String)
     type = Column(String)
 
+    @staticmethod
+    def get(session, key: str):
+        return session.execute(
+            select(Setting)
+            .filter_by(key=key)
+        ).scalars().first()
 
-class System(Base, KeyValueBase, Marshmallowable):
+    @staticmethod
+    def set(session, key: str, value: str):
+        setting = session.execute(
+            select(Setting)
+            .filter_by(key=key)
+        ).scalars().first()
+        setting.value = value
+        session.flush()
+
+
+class System(Base, Marshmallowable):
     __tablename__ = 'system'
     __marshmallow_schema__ = KeyValueSchema
     id = Column(Integer, primary_key=True)
-    key = Column(String)
-    value = Column(String)
-    type = Column(String)
+    _indexer__last_update: Column('indexer__last_update', DateTime)
+    _indexer__in_progress: Column('indexer__in_progress', Boolean)
+    _indexer__total_results: Column('indexer__total_results', Integer)
+    _indexer__processed_results: Column('indexer__processed_results', Integer)
 
 
 class File(Base, Marshmallowable):
