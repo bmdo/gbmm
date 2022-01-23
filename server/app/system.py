@@ -65,10 +65,10 @@ def get_first_time_setup_state():
     with Session.begin() as session:
         state = get_state(session)
         setup_initiated = \
-            state.first_time_setup__initiated is not None and state.first_time_setup__initiated == 'True'
+            state.first_time_setup__initiated is not None and state.first_time_setup__initiated is True
 
         setup_complete = \
-            state.first_time_setup__complete is not None and state.first_time_setup__complete == 'True'
+            state.first_time_setup__complete is not None and state.first_time_setup__complete is True
 
         return {
             'api_key': api_key.value,
