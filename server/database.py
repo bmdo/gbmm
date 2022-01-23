@@ -160,10 +160,13 @@ class Setting(Base, Marshmallowable):
 class SystemState(Base):
     __tablename__ = 'system'
     id = Column(Integer, primary_key=True)
-    indexer__last_update: Column(DateTime)
-    indexer__in_progress: Column(Boolean)
-    indexer__total_results: Column(Integer)
-    indexer__processed_results: Column(Integer)
+    indexer__last_update = Column(DateTime)
+    indexer__in_progress = Column(Boolean)
+    indexer__total_results = Column(Integer)
+    indexer__processed_results = Column(Integer)
+    db__version = Column(String)
+    first_time_setup__initiated = Column(Boolean)
+    first_time_setup__complete = Column(Boolean)
 
 
 class File(Base, Marshmallowable):

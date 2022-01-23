@@ -9,6 +9,10 @@ import server.system
 bp = Blueprint('system', config.SERVER_NAME, url_prefix='/api/system')
 
 
+def initialize():
+    server.system.initialize()
+
+
 @bp.route('/update-index', methods=('POST',))
 def update_index():
     data = json_data()

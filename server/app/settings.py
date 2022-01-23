@@ -8,22 +8,6 @@ from server.database import Session, Setting
 bp = Blueprint('settings', config.SERVER_NAME, url_prefix='/api/settings')
 
 
-db_setting_defaults = [
-    ('gbmm_db_version', '1.0', 'str'),
-    ('startup_initiated', 'False', 'bool'),
-    ('startup_complete', 'False', 'bool')
-]
-
-
-def initialize():
-    with Session.begin() as session:
-        for k, v, t in db_setting_defaults:
-            setting = Setting.get(session, k)
-            if setting is None:
-                setting = Setting(key=k, value=v, type=t)
-                session.add(setting)
-
-
 @bp.route('/get-all', methods=('GET',))
 def get_all():
     settings = config.dump_ui()
