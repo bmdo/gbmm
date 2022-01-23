@@ -16,7 +16,6 @@
 
 <script lang="ts">
 import {Component} from "vue-property-decorator";
-import axios from "axios";
 import SettingGroup from "./ts/SettingGroup";
 import SettingItem from "./ts/SettingItem";
 import {ISettingEntryData} from "./ts/SettingInterfaces";
