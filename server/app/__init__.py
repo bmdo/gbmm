@@ -58,8 +58,6 @@ def create_app():
     from . import media
     server.register_blueprint(media.bp)
 
-    system.initialize()
-
     return server
 
 
