@@ -1,10 +1,10 @@
 import axios from "axios";
 import {ResponseData} from "./API";
 
-export interface StartupResponseData extends ResponseData {
+export interface FirstTimeSetupResponseData extends ResponseData {
     api_key: string
-    startup_initiated: boolean
-    startup_complete: boolean
+    setup_initiated: boolean
+    setup_complete: boolean
 }
 
 export interface UpdateIndexParams {
@@ -12,12 +12,12 @@ export interface UpdateIndexParams {
 }
 
 export default class SystemAPI {
-    public static getFirstTimeStartupState() {
-        return axios.get<StartupResponseData>(`/api/system/first-time-startup-state`);
+    public static getFirstTimeSetupState() {
+        return axios.get<FirstTimeSetupResponseData>(`/api/system/first-time-setup-state`);
     }
 
-    public static runFirstTimeStartup() {
-        return axios.post(`/api/system/run-first-time-startup`, {});
+    public static runFirstTimeSetup() {
+        return axios.post(`/api/system/run-first-time-setup`, {});
     }
 
     public static updateIndex(params: UpdateIndexParams) {

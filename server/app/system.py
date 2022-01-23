@@ -54,38 +54,37 @@ def initialize_state(session: Session):
     return state
 
 
-@bp.route('/first-time-startup-state', methods=('GET',))
-def get_first_time_startup_state():
+@bp.route('/first-time-setup-state', methods=('GET',))
+def get_first_time_setup_state():
     """
-    Returns information about the state of first time startup tasks.
+    Returns information about the state of first time setup tasks.
     :return: An object representing relevant system state.
     """
     api_key = config.get('api.key')
 
     with Session.begin() as session:
         state = get_state(session)
-        startup_initiated = \
-            state.first_time_startup__initiated is not None and state.first_time_startup__initiated.value == 'True'
+        setup_initiated = \
+            state.first_time_setup__initiated is not None and state.first_time_setup__initiated == 'True'
 
-        state = SystemState.get(session, 'startup_complete')
-        startup_complete = \
-            state.first_time_startup__complete is not None and state.first_time_startup__complete.value == 'True'
+        setup_complete = \
+            state.first_time_setup__complete is not None and state.first_time_setup__complete == 'True'
 
         return {
             'api_key': api_key.value,
-            'startup_initiated': startup_initiated,
-            'startup_complete': startup_complete
+            'setup_initiated': setup_initiated,
+            'setup_complete': setup_complete
         }
 
 
-@bp.route('/run-first-time-startup', methods=('POST',))
-def run_first_time_startup():
+@bp.route('/run-first-time-setup', methods=('POST',))
+def run_first_time_setup():
     with Session.begin() as session:
         state = get_state(session)
-        state.first_time_startup__initiated = True
+        state.first_time_setup__initiated = True
         shows_result = video_shows.refresh_shows(session)
         categories_result = video_categories.refresh_categories(session)
-        state.first_time_startup__complete = True
+        state.first_time_setup__complete = True
         return ok()
 
 

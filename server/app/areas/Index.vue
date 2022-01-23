@@ -12,7 +12,7 @@
         <div v-else-if="vm.needApiKey">
             <welcome :needApiKey="vm.needApiKey" :complete-callback="onApiKeySubmitted"></welcome>
         </div>
-        <div v-else-if="!vm.startupComplete" class="init-shield">
+        <div v-else-if="!vm.setupComplete" class="init-shield">
             <h1 class="display-1">gbmm</h1>
             <div v-if="!vm.initFailed" class="d-flex flex-column align-items-center">
                 <span class="spinner-border init-spinner my-4"></span>
@@ -49,74 +49,74 @@ import Icon from "../core/components/Icon.vue";
 })
 export default class Index extends GbmmVue {
     public vm = {
-        startupChecked: false,
+        setupChecked: false,
         needApiKey: true,
-        startupInitiated: false,
-        startupComplete: false,
-        startupFailed: false
+        setupInitiated: false,
+        setupComplete: false,
+        setupFailed: false
     }
 
     public waitInterval: number = -1
 
     public get allComplete() {
-        return !this.vm.needApiKey && this.vm.startupComplete;
+        return !this.vm.needApiKey && this.vm.setupComplete;
     }
 
 
     public created() {
-        this.checkStartup();
+        this.checkFirstTimeSetup();
     }
 
     @Watch('$route')
     public onRouteChanged(to: string, from: string) {
-        this.checkStartup();
+        this.checkFirstTimeSetup();
     }
 
     public onApiKeySubmitted() {
         this.vm.needApiKey = false;
-        this.runStartup();
+        this.runFirstTimeSetup();
     }
 
-    public async checkStartup() {
+    public async checkFirstTimeSetup() {
         if (!this.allComplete) {
-            let startupInfo = await API.system.getFirstTimeStartupState();
-            let apiKey = startupInfo.data.api_key;
-            this.vm.startupInitiated = startupInfo.data.startup_initiated;
-            this.vm.startupComplete = startupInfo.data.startup_complete;
+            let setupInfo = await API.system.getFirstTimeSetupState();
+            let apiKey = setupInfo.data.api_key;
+            this.vm.setupInitiated = setupInfo.data.setup_initiated;
+            this.vm.setupComplete = setupInfo.data.setup_complete;
             if (apiKey != null && apiKey != '') {
                 this.vm.needApiKey = false;
             }
-            this.vm.startupChecked = true;
+            this.vm.setupChecked = true;
 
-            if (!this.vm.needApiKey && !this.vm.startupInitiated) {
-                // For some reason, we have an API key but startup was not initiated. Try to run startup.
-                this.runStartup();
+            if (!this.vm.needApiKey && !this.vm.setupInitiated) {
+                // For some reason, we have an API key but first time setup was not initiated. Try to run setup.
+                this.runFirstTimeSetup();
             }
-            else if (this.vm.startupInitiated && !this.vm.startupComplete) {
-                // The page was likely refreshed well startup was still ongoing. Wait for startup to complete.
-                this.waitForStartup();
+            else if (this.vm.setupInitiated && !this.vm.setupComplete) {
+                // The page was likely refreshed while setup was still ongoing. Wait for setup to complete.
+                this.waitForFirstTimeSetup();
             }
         }
     }
 
-    public runStartup() {
-        API.system.runFirstTimeStartup()
+    public runFirstTimeSetup() {
+        API.system.runFirstTimeSetup()
             .then(() => {
-                this.vm.startupComplete = true;
+                this.vm.setupComplete = true;
             })
             .catch(() => {
-                this.vm.startupFailed = true;
+                this.vm.setupFailed = true;
             });
     }
 
-    public waitForStartup() {
-        this.waitInterval = window.setInterval(() => this.waitForStartupInterval, 1000)
+    public waitForFirstTimeSetup() {
+        this.waitInterval = window.setInterval(() => this.waitForSetupInterval, 1000)
     }
 
-    private async waitForStartupInterval() {
-        let startupInfo = await API.system.getFirstTimeStartupState();
-        if (startupInfo.data.startup_complete) {
-            this.vm.startupComplete = true;
+    private async waitForSetupInterval() {
+        let setupInfo = await API.system.getFirstTimeSetupState();
+        if (setupInfo.data.setup_complete) {
+            this.vm.setupComplete = true;
             window.clearInterval(this.waitInterval);
             this.waitInterval = -1;
         }
