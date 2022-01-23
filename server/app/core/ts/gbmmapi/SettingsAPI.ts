@@ -1,12 +1,6 @@
 import axios from "axios";
 import {ResponseData} from "./API";
 
-export interface StartupResponseData extends ResponseData {
-    api_key: string
-    startup_initiated: boolean
-    startup_complete: boolean
-}
-
 export interface SettingsResponseData extends ResponseData {
     settings: SettingsGroupWrapper[]
 }
@@ -43,10 +37,6 @@ export interface SettingsSetParams {
 }
 
 export default class SettingsAPI {
-    public static startup() {
-        return axios.get<StartupResponseData>(`/api/settings/startup`);
-    }
-
     public static getAll() {
         return axios.get<SettingsResponseData>(`/api/settings/get-all`);
     }

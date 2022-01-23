@@ -79,7 +79,7 @@ export default class Index extends GbmmVue {
 
     public async checkStartup() {
         if (!this.allComplete) {
-            let startupInfo = await API.settings.startup();
+            let startupInfo = await API.system.getFirstTimeStartupState();
             let apiKey = startupInfo.data.api_key;
             this.vm.startupInitiated = startupInfo.data.startup_initiated;
             this.vm.startupComplete = startupInfo.data.startup_complete;
@@ -100,7 +100,7 @@ export default class Index extends GbmmVue {
     }
 
     public runStartup() {
-        API.startup.startup()
+        API.system.runFirstTimeStartup()
             .then(() => {
                 this.vm.startupComplete = true;
             })
@@ -114,7 +114,7 @@ export default class Index extends GbmmVue {
     }
 
     private async waitForStartupInterval() {
-        let startupInfo = await API.settings.startup();
+        let startupInfo = await API.system.getFirstTimeStartupState();
         if (startupInfo.data.startup_complete) {
             this.vm.startupComplete = true;
             window.clearInterval(this.waitInterval);

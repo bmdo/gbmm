@@ -5,7 +5,6 @@ import VideosAPI from "./VideosAPI";
 import { AxiosResponse } from "axios";
 import VideoShowsAPI from "./VideoShowsAPI";
 import SettingsAPI from "./SettingsAPI";
-import StartupAPI from "./StartupAPI";
 import VideoCategoriesAPI from "./VideoCategoriesAPI";
 import SystemAPI from "./SystemAPI";
 
@@ -36,7 +35,6 @@ export default class API {
     public static readonly videoCategories = VideoCategoriesAPI
     public static readonly videoShows = VideoShowsAPI
     public static readonly settings = SettingsAPI
-    public static readonly startup = StartupAPI
     public static readonly system = SystemAPI
 }
 

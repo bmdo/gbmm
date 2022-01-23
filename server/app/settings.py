@@ -23,21 +23,3 @@ def modify():
         value = config.get(setting['address']).value
         out[setting['address']] = value
     return out
-
-
-@bp.route('/startup', methods=('GET',))
-def startup():
-    api_key = config.get('api.key')
-
-    with Session.begin() as session:
-        setting = Setting.get(session, 'startup_initiated')
-        startup_initiated = setting is not None and setting.value == 'True'
-
-        setting = Setting.get(session, 'startup_complete')
-        startup_complete = setting is not None and setting.value == 'True'
-
-        return {
-            'api_key': api_key.value,
-            'startup_initiated': startup_initiated,
-            'startup_complete': startup_complete
-        }

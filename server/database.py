@@ -159,7 +159,7 @@ class Setting(Base, Marshmallowable):
 
 class SystemState(Base):
     __tablename__ = 'system'
-    id = Column(Integer, primary_key=True)
+    id = Column(String, primary_key=True)
     indexer__last_update = Column(DateTime)
     indexer__in_progress = Column(Boolean)
     indexer__total_results = Column(Integer)

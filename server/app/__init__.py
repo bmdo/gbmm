@@ -53,8 +53,6 @@ def create_app():
     server.register_blueprint(video_shows.bp)
     from . import settings
     server.register_blueprint(settings.bp)
-    from . import startup
-    server.register_blueprint(startup.bp)
     from . import system
     server.register_blueprint(system.bp)
     from . import media
