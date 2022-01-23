@@ -1,5 +1,5 @@
 from enum import Enum
-
+from sqlalchemy import select
 from server.gb_api import GBAPI, SortDirection
 from server.requester import RequestPriority
 from server.database import Session, System
@@ -36,7 +36,9 @@ def update_video_index(t: IndexUpdateType = IndexUpdateType.quick):
         while not s.is_last_page:
             s.next()
             with Session.begin() as session:
-                state = session.select(System).scalars().all()
+                state = session.execute(
+                    select(System)
+                ).scalars().all()
                 repr(state)
                 #for k, v, t in db_setting_defaults:
                 #    setting = Setting.get(session, k)

@@ -7,6 +7,7 @@ import VideoShowsAPI from "./VideoShowsAPI";
 import SettingsAPI from "./SettingsAPI";
 import StartupAPI from "./StartupAPI";
 import VideoCategoriesAPI from "./VideoCategoriesAPI";
+import SystemAPI from "./SystemAPI";
 
 export interface ResponseData {
 
@@ -36,6 +37,7 @@ export default class API {
     public static readonly videoShows = VideoShowsAPI
     public static readonly settings = SettingsAPI
     public static readonly startup = StartupAPI
+    public static readonly system = SystemAPI
 }
 
 export function validResponseData(data: ResponseData): boolean {

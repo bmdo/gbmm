@@ -54,4 +54,8 @@ export default class SettingsAPI {
     public static set(args: SettingsSetParams) {
         return axios.post(`/api/settings/modify`, args);
     }
+
+    public static updateIndex(args: SettingsSetParams) {
+        return axios.post(`/api/settings/modify`, args);
+    }
 }

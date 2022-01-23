@@ -12,10 +12,9 @@ bp = Blueprint('system', config.SERVER_NAME, url_prefix='/api/system')
 @bp.route('/update-index', methods=('POST',))
 def update_index():
     data = json_data()
-    out = {}
-    t = data.get('type', str)
+    t = data.get('updateType', str)
     if t == 'quick':
         server.system.update_video_index(server.system.IndexUpdateType.quick)
-    else: # 'full'
+    else:  # 'full'
         server.system.update_video_index(server.system.IndexUpdateType.full)
-    return out
+    return ok()

@@ -5,8 +5,8 @@
             <h5 class="mb-3">System Controls</h5>
             <label class="me-3 form-label fw-500">Update Index</label>
             <small class="text-muted">Refresh the video index. A quick update pulls new videos since the last index update. A full update refreshes the full index. A full update can take several minutes.</small>
-            <icon-button :click="void(0)" :icon="'lightning-fill'" :text="'Quick Update'" class="btn-outline-primary me-2"></icon-button>
-            <icon-button :click="void(0)" :icon="'arrow-clockwise'" :text="'Full Update'" class="btn-outline-primary me-2"></icon-button>
+            <icon-button :click="() => updateIndex('quick')" :icon="'lightning-fill'" :text="'Quick Update'" class="btn-outline-primary me-2"></icon-button>
+            <icon-button :click="() => updateIndex('full')" :icon="'arrow-clockwise'" :text="'Full Update'" class="btn-outline-primary me-2"></icon-button>
         </div>
         <setting-group :group="generalGroup"></setting-group>
         <setting-group v-for="group in definedGroups" :group="group" :key="group.id"></setting-group>
@@ -84,6 +84,14 @@ export default class Settings extends GbmmVue {
             .then((response) => {
                 this.resetModified();
             });
+    }
+
+    /**
+     * Send a request to the update index API.
+     * @param updateType Which type of index update to run, 'quick' or 'full'
+     */
+    public updateIndex(updateType: string) {
+        API.system.updateIndex({ updateType: updateType })
     }
 }
 </script>

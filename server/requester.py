@@ -86,7 +86,7 @@ class Requester:
             daemon_logger.debug(f'Requester daemon sleeping for {sleep_time} seconds')
             time.sleep(sleep_time)
             with self.__queue_pushed_condition:
-                while len(self.__queue) == 0:
+                while len(self.__queue_low) + len(self.__queue) + len(self.__queue_high) == 0:
                     daemon_logger.debug(f"Requester daemon awaiting notification.")
                     self.__queue_pushed_condition.wait()
                     daemon_logger.debug(f"Requester daemon received notification.")
