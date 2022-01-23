@@ -275,7 +275,8 @@ class Config:
         Dumps a structured representation of the configuration that includes information for presenting in a user
         interface.
         """
-        return self.__to_nested_ui_list(self.__dict)
+        dump = self.__to_nested_ui_list(self.__dict)
+        return {'settings': dump}
 
     def __init__(self, config_file: ConfigFile):
         self.config_file = config_file

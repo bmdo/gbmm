@@ -15,6 +15,7 @@ import SettingItem from "./ts/SettingItem";
 import {ISettingEntryData} from "./ts/SettingInterfaces";
 import SettingGroupComponent from "./components/SettingGroupComponent.vue";
 import GbmmVue from "../../core/ts/GbmmVue";
+import API from "../../core/ts/gbmmapi/API";
 
 @Component({
     components: {SettingGroup: SettingGroupComponent}
@@ -26,15 +27,7 @@ export default class Settings extends GbmmVue {
 
     public created() {
         this.areaTitle = 'Settings';
-        let general = this.settings.filter(item => item.item)
-        for (let entry of general) {
-            this.generalGroup.items.push(new SettingItem(entry.item))
-        }
-
-        let grouped = this.settings.filter(item => item.group)
-        for (let entry of grouped) {
-            this.definedGroups.push(new SettingGroup(entry.group))
-        }
+        this.load();
     }
 
     public get modified(): boolean {
@@ -46,6 +39,25 @@ export default class Settings extends GbmmVue {
         for (let group of this.definedGroups) {
             group.resetModified();
         }
+    }
+
+    public load() {
+        this.generalGroup.items.length = 0
+
+        API.settings.getAll()
+            .then((response) => {
+                console.log(response);
+                this.settings = response.data.settings;
+                let general = this.settings.filter(item => item.item);
+                for (let entry of general) {
+                    this.generalGroup.items.push(new SettingItem(entry.item));
+                }
+
+                let grouped = this.settings.filter(item => item.group);
+                for (let entry of grouped) {
+                    this.definedGroups.push(new SettingGroup(entry.group));
+                }
+            });
     }
 
     public save() {
@@ -61,13 +73,11 @@ export default class Settings extends GbmmVue {
             };
         });
 
-        axios
-            .post('/settings/modify', {
-                settings: pairs
-            })
+        API.settings
+            .set({ settings: pairs })
             .then((response) => {
                 this.resetModified();
-            })
+            });
     }
 }
 </script>

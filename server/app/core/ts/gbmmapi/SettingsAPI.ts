@@ -7,6 +7,32 @@ export interface StartupResponseData extends ResponseData {
     startup_complete: boolean
 }
 
+export interface SettingsResponseData extends ResponseData {
+    settings: SettingsGroupWrapper[]
+}
+
+export interface SettingsGroupWrapper {
+    group: SettingsGroup
+}
+
+export interface SettingsGroup {
+    address: string
+    items: SettingsItemWrapper[]
+    name: string
+}
+
+export interface SettingsItemWrapper {
+    item: SettingsItem
+}
+
+export interface SettingsItem {
+    address: string
+    helptext: string
+    name: string
+    type: string
+    value: string
+}
+
 export interface SettingsSetItem {
     address: string
     value: string
@@ -19,6 +45,10 @@ export interface SettingsSetParams {
 export default class SettingsAPI {
     public static startup() {
         return axios.get<StartupResponseData>(`/api/settings/startup`);
+    }
+
+    public static getAll() {
+        return axios.get<SettingsResponseData>(`/api/settings/get-all`);
     }
 
     public static set(args: SettingsSetParams) {
