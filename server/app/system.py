@@ -58,6 +58,7 @@ def initialize_state(session: Session):
 def get_first_time_setup_state():
     """
     Returns information about the state of first time setup tasks.
+
     :return: An object representing relevant system state.
     """
     api_key = config.get('api.key')
