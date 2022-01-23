@@ -157,14 +157,13 @@ class Setting(Base, Marshmallowable):
         session.flush()
 
 
-class System(Base, Marshmallowable):
+class SystemState(Base):
     __tablename__ = 'system'
-    __marshmallow_schema__ = KeyValueSchema
     id = Column(Integer, primary_key=True)
-    _indexer__last_update: Column('indexer__last_update', DateTime)
-    _indexer__in_progress: Column('indexer__in_progress', Boolean)
-    _indexer__total_results: Column('indexer__total_results', Integer)
-    _indexer__processed_results: Column('indexer__processed_results', Integer)
+    indexer__last_update: Column(DateTime)
+    indexer__in_progress: Column(Boolean)
+    indexer__total_results: Column(Integer)
+    indexer__processed_results: Column(Integer)
 
 
 class File(Base, Marshmallowable):
