@@ -1,5 +1,6 @@
 import logging
 import traceback
+import types
 from functools import wraps
 import flask
 from flask import Response, request
@@ -125,7 +126,7 @@ def recursive_dump(node: any):
         for k, v in node.items():
             data[k] = recursive_dump(v)
         return data
-    elif isinstance(node, list):
+    elif isinstance(node, list) or isinstance(node, types.GeneratorType):
         return [recursive_dump(i) for i in node]
     elif isinstance(node, str) or isinstance(node, int) or isinstance(node, bool):
         return node

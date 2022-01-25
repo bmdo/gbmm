@@ -3,7 +3,7 @@ import json
 from datetime import datetime
 from enum import IntEnum
 from pathlib import Path
-from typing import Type, Callable
+from typing import Type, Callable, Generator
 
 from marshmallow import Schema
 from requests.structures import CaseInsensitiveDict
@@ -164,6 +164,7 @@ class SystemState(Base):
     indexer__in_progress = Column(Boolean)
     indexer__total_results = Column(Integer)
     indexer__processed_results = Column(Integer)
+    indexer__in_progress_type = Column(String)
     db__version = Column(String)
     first_time_setup__initiated = Column(Boolean)
     first_time_setup__complete = Column(Boolean)
@@ -574,11 +575,26 @@ def get_entity_class_by_item_name(item_name: str) -> Type[GBBase]:
     return next(e for e in gb_entities if e.__item_name__ == item_name)
 
 
-def from_api(session, entity_type: Type[GBBase], result):
-    if isinstance(result, list):
-        return [entity_type.from_api_result(session, r) for r in result]
-    else:
-        return entity_type.from_api_result(session, result)
+def from_api(session, entity_type: Type[GBBase], result) -> Generator[GBBase]:
+    # This is a generator because of how nested objects work when interacting with the database.
+    #
+    # If the result provided is a list of entities, then multiple of those entities may have related objects.
+    # When we process each entity, we will search for its related object in the database, and if it does not exist,
+    # we create a new one with the properties received from the API.
+    #
+    # If the result of from_api is used to add the list of objects from the database, and if an object is related to
+    # multiple items in that list but did not already exist in the database, then each time we encounter the related
+    # object, we would create a new version of that related object, eventually causing a conflict for any UNIQUE
+    # constraints in that related object's schema.
+    #
+    # By using a generator, we can ensure that even if the result of from_api is used to add objects to the database,
+    # We will not create multiple versions of the same related object because it will already have been inserted into
+    # the database the next time it is encountered.
+
+    if not isinstance(result, list):
+        result = [result]
+    for r in result:
+        yield entity_type.from_api_result(session, r)
 
 
 Base.metadata.create_all(engine)

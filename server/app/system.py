@@ -1,11 +1,13 @@
+from datetime import datetime, timedelta
+
 from flask import Blueprint
 from sqlalchemy import select
 
 from server.app import video_shows, video_categories
 from server.app.flask_helpers import ok, json_data, api_key_required
-from server.gb_api import GBAPI, SortDirection
+from server.gb_api import GBAPI, SortDirection, ResourceSelect
 from config import config
-from server.database import Session, SystemState
+from server.database import Session, SystemState, from_api, Video
 from server.requester import RequestPriority
 
 bp = Blueprint('system', config.SERVER_NAME, url_prefix='/api/system')
@@ -94,29 +96,42 @@ def update_index():
     data = json_data()
     t = data.get('updateType', str)
 
-    if t == 'quick':
-        return
-    else:  # 'full'
-        # Loop over all videos available on the Giant Bomb website and add their info to the local database.
-        s = GBAPI.select('video').sort('id', SortDirection.ASC).limit(100).priority(RequestPriority.low)
-        while not s.is_last_page:
-            s.next()
-            with Session.begin() as session:
-                state = session.execute(
-                    select(SystemState)
-                ).scalars().all()
-                repr(state)
-                # for k, v, t in db_setting_defaults:
-                #    setting = Setting.get(session, k)
-                #    if setting is None:
-                #        setting = Setting(key=k, value=v, type=t)
-                #        session.add(setting)
+    with Session.begin() as session:
+        state = get_state(session)
+        state.indexer__in_progress = True
+        state.indexer__in_progress_type = t
+        if state.indexer__total_results is None:
+            state.indexer__total_results = 0
+        if state.indexer__processed_results is None:
+            state.indexer__processed_results = 0
+        r: ResourceSelect
 
-                # session.add()
-            # s.total_results
-            # s.total_pages
-            # TODO
-            # Look at the metadata in the result in order to build some sense of progress
-            # Store that progress in the database under a new System table
-            # Save the result in the database
-    return
+        if t == 'quick':
+            # Index videos published since the last index update time.
+            # Add a margin of error to the last update time to prevent race conditions between indexing and
+            # new video posting times. An extra day of lookback should not hurt performance much.
+            start_time = state.indexer__last_update + timedelta(days=-1)
+            start_time.replace(microsecond=0).isoformat()
+            end_time = datetime.now()
+            filter_string = f'{start_time}|{end_time}'
+            r = GBAPI.select('video') \
+                .filter(publish_date=filter_string) \
+                .sort('id', SortDirection.ASC).limit(100).priority(RequestPriority.low)
+
+        else:  # 'full'
+            # Loop over all videos available on the Giant Bomb website and add their info to the local database.
+            r = GBAPI.select('video').sort('id', SortDirection.ASC).limit(100).priority(RequestPriority.low)
+
+    while not r.is_last_page:
+        with Session.begin() as session:
+            r.next()
+            state = get_state(session)
+            state.indexer__total_results = r.total_results
+            state.indexer__processed_results += r.page_results
+            for video in from_api(session, Video, r.results):
+                session.add(video)
+
+    with Session.begin() as session:
+        state.indexer__in_progress = False
+        state.indexer__in_progress_type = None
+        state.indexer__last_update = datetime.now()

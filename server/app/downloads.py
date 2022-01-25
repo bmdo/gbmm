@@ -135,7 +135,7 @@ def enqueue():
                 if video_data is None:
                     raise ValueError()
                 else:
-                    video = from_api(session, Video, video_data)
+                    video = next(from_api(session, Video, video_data))
 
             video_download = download_video_with_images(session, video)
             session.add(video_download)
