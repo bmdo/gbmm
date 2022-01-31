@@ -58,6 +58,8 @@ def run_first_time_setup():
         state.first_time_setup__initiated = True
         shows_result = video_shows.refresh_shows(session)
         categories_result = video_categories.refresh_categories(session)
+        # Index refresh runs asynchronously
+        Indexer.start_full_indexer(session)
         state.first_time_setup__complete = True
         return ok()
 
