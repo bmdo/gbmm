@@ -157,14 +157,17 @@ class Setting(Base, Marshmallowable):
         session.flush()
 
 
-class SystemState(Base):
+class SystemStateStorage(Base):
     __tablename__ = 'system'
     id = Column(String, primary_key=True)
-    indexer__last_update = Column(DateTime)
-    indexer__in_progress = Column(Boolean)
-    indexer__total_results = Column(Integer)
-    indexer__processed_results = Column(Integer)
-    indexer__in_progress_type = Column(String)
+    indexer_full__last_update = Column(DateTime)
+    indexer_full__in_progress = Column(Boolean)
+    indexer_full__total_results = Column(Integer)
+    indexer_full__processed_results = Column(Integer)
+    indexer_quick__last_update = Column(DateTime)
+    indexer_quick__in_progress = Column(Boolean)
+    indexer_quick__total_results = Column(Integer)
+    indexer_quick__processed_results = Column(Integer)
     db__version = Column(String)
     first_time_setup__initiated = Column(Boolean)
     first_time_setup__complete = Column(Boolean)
@@ -575,7 +578,7 @@ def get_entity_class_by_item_name(item_name: str) -> Type[GBBase]:
     return next(e for e in gb_entities if e.__item_name__ == item_name)
 
 
-def from_api(session, entity_type: Type[GBBase], result) -> Generator[GBBase]:
+def from_api(session, entity_type: Type[GBBase], result) -> Generator[GBBase, None, None]:
     # This is a generator because of how nested objects work when interacting with the database.
     #
     # If the result provided is a list of entities, then multiple of those entities may have related objects.
