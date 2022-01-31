@@ -58,6 +58,9 @@ def create_app():
     from . import media
     server.register_blueprint(media.bp)
 
+    # Run startup tasks after every startup
+    system.start()
+
     return server
 
 

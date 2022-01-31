@@ -15,6 +15,18 @@ from server.system_state import SystemState
 bp = Blueprint('system', config.SERVER_NAME, url_prefix='/api/system')
 
 
+def start():
+    """
+    Run startup tasks.
+    """
+
+    with Session.begin() as session:
+        state = SystemState.get(session)
+        # Resume the full indexer if it was in progress during last shutdown
+        Indexer.resume_full_indexer(session)
+        # Clear quick indexer "in progress" flag if it was running during last shutdown
+        state.indexer_quick__in_progress = False
+
 @bp.route('/first-time-setup-state', methods=('GET',))
 def get_first_time_setup_state():
     """
