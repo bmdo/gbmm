@@ -27,6 +27,12 @@ class Indexer:
     the server was restarted before the index operation completed.
     '''
 
+    _active_thread: threading.Thread = None
+    'The Thread an index refresh is running on. If no index refresh thread is running, the value is None.'
+
+    _refresh_stop_requested = False
+    'Indicates whether the active index refresh thread has been requested to stop.'
+
     _logger = logging.getLogger('gbmm.Indexer')
 
     @staticmethod
@@ -47,14 +53,38 @@ class Indexer:
         state.indexer_full__in_progress = True
         state.indexer_full__total_results = 0
         state.indexer_full__processed_results = 0
+        return Indexer.__run_full_index_wrap(session)
 
+    @staticmethod
+    def resume_full_indexer(session: Session):
+        """
+        Resume an in-progress full index refresh that was previously paused, likely due to a system restart.
+
+        If a full refresh is already in progress, nothing happens.
+
+        :param session: A SQLAlchemy Session
+        :return:
+        """
+        state = SystemState.get(session)
+        if state.indexer_full__in_progress and not Indexer._active:
+            Indexer.__run_full_index_wrap(session)
+
+    @staticmethod
+    def __run_full_index_wrap(session: Session):
+        """
+        This wrapper helps to run the full index refresh for both starting a new refresh and resuming a paused refresh.
+
+        :param session: A SQLAlchemy Session
+        :return: The Thread on which the indexer is running.
+        """
         # Loop over all videos available on the Giant Bomb website and add their info to the local database.
         r = GBAPI.select('video').sort('id', SortDirection.ASC).limit(100).priority(RequestPriority.low)
 
-        def finish_callback(s: Session):
+        def finish_callback(s: Session, error):
             t = SystemState.get(s)
             t.indexer_full__in_progress = False
-            t.indexer_full__last_update = datetime.now()
+            if not error:
+                t.indexer_full__last_update = datetime.now()
 
         return Indexer.__run_threaded(r, 'full', finish_callback)
 
@@ -109,15 +139,30 @@ class Indexer:
             .filter(publish_date=filter_string) \
             .sort('id', SortDirection.ASC).limit(100).priority(RequestPriority.low)
 
-        def finish_callback(s: Session):
+        def finish_callback(s: Session, error):
             t = SystemState.get(s)
             t.indexer_quick__in_progress = False
-            t.indexer_quick__last_update = datetime.now()
+            if not error:
+                t.indexer_quick__last_update = datetime.now()
 
         return Indexer.__run_threaded(r, 'quick', finish_callback)
 
     @staticmethod
-    def __run_threaded(r: ResourceSelect, t: Literal['quick', 'full'], finish_callback: Callable[[Session], any] = None):
+    def stop():
+        """
+        If an index refresh is running, stop it and reset the state. Stopping the refresh occurs asynchronously and this
+        method may return before the refresh has stopped.
+
+        If no index refresh is running, nothing happens.
+
+        :return:
+        """
+        if Indexer._active_thread is not None:
+            Indexer._refresh_stop_requested = True
+            Indexer._logger.info('Index refresh stopping...')
+
+    @staticmethod
+    def __run_threaded(r: ResourceSelect, t: Literal['quick', 'full'], finish_callback: Callable[[Session, bool], any] = None):
         """
         Start the indexer in a separate thread.
 
@@ -127,12 +172,18 @@ class Indexer:
         :return: The Thread on which the indexer is running.
         """
 
+        # Reset stop flag in case it was previously set
+        Indexer._refresh_stop_requested = False
+
         # Set daemon=True so that the server shuts down even if the indexer is active.
         # Indexer state can be recovered on next startup and the indexer can be resumed.
-        return threading.Thread(target=Indexer.__run, args=[r, t, finish_callback], daemon=True).start()
+        Indexer._active_thread = threading.Thread(target=Indexer.__run,
+                                                  args=[r, t, finish_callback],
+                                                  daemon=True).start()
+        return Indexer._active_thread
 
     @staticmethod
-    def __run(r: ResourceSelect, t: Literal['quick', 'full'], finish_callback: Callable[[Session], any] = None):
+    def __run(r: ResourceSelect, t: Literal['quick', 'full'], finish_callback: Callable[[Session, bool], any] = None):
         """
         Run the indexer.
 
@@ -141,6 +192,7 @@ class Indexer:
         :param finish_callback: A callback run after the index update completes, useful for recording final state.
         :return:
         """
+        error = False
 
         Indexer._logger.info(f'Activating an indexer run. Type: {t}')
 
@@ -158,7 +210,7 @@ class Indexer:
         total_attr = f'indexer_{t}__total_results'
         processed_attr = f'indexer_{t}__processed_results'
 
-        while not r.is_last_page:
+        while not r.is_last_page and not Indexer._refresh_stop_requested:
             with Session.begin() as session:
                 r.next()
 
@@ -177,12 +229,17 @@ class Indexer:
                                       f'Results indexed so far this run: {processed_results}. '
                                       f'Total results to index: {total_results}.')
 
+        if Indexer._refresh_stop_requested:
+            Indexer._logger.info('Index refresh stopped.')
+            error = True
+
         if finish_callback is not None:
             with Session.begin() as session:
-                finish_callback(session)
+                finish_callback(session, error)
 
         with Indexer._thread_lock:
             Indexer._active = False
+            Indexer._active_thread = None
 
         Indexer._logger.info('Completed indexer run.')
 
