@@ -1,6 +1,6 @@
 import Progress from './Progress';
 import File from "./File";
-import API, {validResponseData} from "./gbmmapi/API";
+import API, {ResponsePromise, validResponseData} from "./gbmmapi/API";
 import {DownloadEnqueueParams, DownloadResponseData, DownloadsGetFilters} from "./gbmmapi/DownloadsAPI";
 import Loadable from "./Loadable";
 import Definitions from "./Definitions";
@@ -31,10 +31,6 @@ export default class Download extends Loadable {
     public valid: boolean = false
     public definitions: Definitions
 
-    private interval: number = -1
-    private monitoring: boolean = false
-    private refreshing: boolean = false
-
     public constructor(data: DownloadResponseData, definitions: Definitions) {
         super();
         this.definitions = definitions;
@@ -44,36 +40,22 @@ export default class Download extends Loadable {
         this.loaded = true;
     }
 
-    public static async get(filters: DownloadsGetFilters, monitor: boolean = false) {
+    public static async get(filters: DownloadsGetFilters) {
         const definitions = await Definitions.get();
         const response = await API.downloads.getOne(filters);
-        const download = new Download(response.data, definitions);
-        if (monitor) {
-            download.startMonitor()
-        }
-        return download;
+        return new Download(response.data, definitions);
     }
 
-    public static async getMany(filters: DownloadsGetFilters, monitor: boolean = false) {
+    public static async getMany(filters: DownloadsGetFilters) {
         const definitions = await Definitions.get();
         const responses = await API.downloads.get(filters);
-        const resultList = new ResultList(Download, responses.data, definitions);
-        if (monitor) {
-            for (let download of resultList) {
-                download.startMonitor()
-            }
-        }
-        return resultList;
+        return new ResultList(Download, responses.data, definitions);
     }
 
-    public static async enqueue(params: DownloadEnqueueParams, monitor: boolean = false) {
+    public static async enqueue(params: DownloadEnqueueParams) {
         const definitions = await Definitions.get();
         const response = await API.downloads.enqueue(params);
-        const download = new Download(response.data, definitions);
-        if (monitor) {
-            download.startMonitor()
-        }
-        return download;
+        return new Download(response.data, definitions);
     }
 
     private updateFromResponseData(data: DownloadResponseData) {
@@ -95,33 +77,6 @@ export default class Download extends Loadable {
         this.startTime = data.start_time;
         this.finishTime = data.finish_time;
         this.progress.update(this.sizeBytes, this.downloadedBytes);
-    }
-
-    public startMonitor = () => {
-        if (!this.monitoring && (this.isQueued || this.isInProgress)) {
-            this.monitoring = true;
-            this.interval = window.setInterval(this.refresh, 1000);
-        }
-    }
-
-    public stopMonitor = () => {
-        if (this.monitoring) {
-            this.monitoring = false;
-            window.clearInterval(this.interval);
-        }
-    }
-
-    public refresh = () => {
-        if (this.refreshing) return;
-        this.refreshing = true;
-        API.downloads.getOne({id: this.id})
-            .then((response) => {
-                this.updateFromResponseData(response.data);
-                if (this.monitoring && !this.isQueued && !this.isInProgress) {
-                    this.stopMonitor();
-                }
-                this.refreshing = false;
-            });
     }
 
     public get statusName(): string {

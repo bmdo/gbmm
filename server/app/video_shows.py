@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from server.app.flask_helpers import dump, ok, api_key_required
 from server.gb_api import GBAPI
-from server.database import Session, from_api, VideoShow
+from server.database import Session, from_api, VideoShow, from_api_generator
 from config import config
 
 bp = Blueprint('video_shows', config.SERVER_NAME, url_prefix='/api/video-shows')
@@ -15,7 +15,7 @@ def refresh_shows(session):
     while not s.is_last_page:
         show_results += s.next()
 
-    shows = from_api(session, VideoShow, show_results)
+    shows = from_api_generator(session, VideoShow, show_results)
     for show in shows:
         session.add(show)
 

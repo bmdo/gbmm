@@ -3,7 +3,7 @@ import threading
 from datetime import datetime, timedelta
 from typing import Tuple, Optional, Callable, Literal
 
-from server.database import Session, from_api, Video
+from server.database import Session, from_api, Video, from_api_generator
 from server.gb_api import GBAPI, SortDirection, ResourceSelect
 from server.requester import RequestPriority
 from server.system_state import SystemState
@@ -220,7 +220,7 @@ class Indexer:
                 state.__setattr__(total_attr, r.total_results)
                 state.__setattr__(processed_attr, state.__getattribute__(processed_attr) + r.page_results)
 
-                for video in from_api(session, Video, r.results):
+                for video in from_api_generator(session, Video, r.results):
                     session.add(video)
 
                 total_results = state.__getattribute__(total_attr)

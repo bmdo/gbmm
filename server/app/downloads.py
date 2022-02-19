@@ -1,7 +1,7 @@
 from flask import Blueprint, redirect, url_for
 from sqlalchemy import select, or_, asc
 from config import config
-from server.database import Session, Download, Video, from_api
+from server.database import Session, Download, Video, from_api, from_api_generator
 from server.app.flask_helpers import bad_request, json_data, FilterHelper, dump, ListResultMetadata, api_key_required
 from server.downloader import downloader
 from server.gb_api import GBAPI
@@ -135,7 +135,7 @@ def enqueue():
                 if video_data is None:
                     raise ValueError()
                 else:
-                    video = next(from_api(session, Video, video_data))
+                    video = next(from_api_generator(session, Video, video_data))
 
             video_download = download_video_with_images(session, video)
             session.add(video_download)

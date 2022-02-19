@@ -90,7 +90,7 @@ class Downloader:
                 # The GBEntity data for this download has not been stored to the database yet.
                 # Query the API and store it to the database.
                 obj_data = gb_api.get_one(entity_type, download.obj_id)
-                obj = next(database.from_api(self.session, entity_type, obj_data))
+                obj = database.from_api(self.session, entity_type, obj_data)
 
             if obj is None:
                 download.status = Download.DownloadStatus.FAILED

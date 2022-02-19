@@ -145,6 +145,7 @@ export default class VideosBrowse extends GbmmVue {
             requestFilters.sort_direction = activeSort[0].direction;
         }
         Video.getBrowse(requestFilters).then(v => this.videos.push(...v));
+        // TODO subscriber?
     }
 
     public onFilterApply = () => {

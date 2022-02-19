@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from server.app.flask_helpers import dump, ok, api_key_required
 from server.gb_api import GBAPI
-from server.database import Session, from_api, VideoCategory
+from server.database import Session, from_api, VideoCategory, from_api_generator
 from config import config
 
 bp = Blueprint('video_categories', config.SERVER_NAME, url_prefix='/api/video-categories')
@@ -15,7 +15,7 @@ def refresh_categories(session):
     while not s.is_last_page:
         categories_results += s.next()
 
-    categories = from_api(session, VideoCategory, categories_results)
+    categories = from_api_generator(session, VideoCategory, categories_results)
     for category in categories:
         session.add(category)
 

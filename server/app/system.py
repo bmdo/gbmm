@@ -27,6 +27,7 @@ def start():
         # Clear quick indexer "in progress" flag if it was running during last shutdown
         state.indexer_quick__in_progress = False
 
+
 @bp.route('/first-time-setup-state', methods=('GET',))
 def get_first_time_setup_state():
     """
@@ -74,3 +75,6 @@ def update_index():
         else:
             Indexer.start_full_indexer(session)
     return ok()
+
+
+# TODO Provide facility for observing index state on the front end

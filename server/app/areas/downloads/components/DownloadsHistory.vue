@@ -47,6 +47,7 @@ export default class DownloadsHistory extends GbmmVue {
 
     public created() {
         this.load();
+        // TODO add subscriber (maybe in Downloads.vue instead?)
     }
 
     public async load() {

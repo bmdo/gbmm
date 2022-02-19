@@ -3,6 +3,9 @@ import {Component} from "vue-property-decorator";
 import Definitions from "./Definitions";
 import Loadable from "./Loadable";
 
+type Constructor<T> = new (...args: any[]) => T;
+type AbstractConstructor<T> = abstract new (...args: any[]) => T;
+
 @Component({})
 export default class GbmmVue extends Vue {
     private static areaTitle_ = ''
@@ -36,4 +39,8 @@ export default class GbmmVue extends Vue {
     public loaded_(...l: Loadable[]) {
         return l.reduce((accum: boolean, cur) => accum && cur !== null && cur !== undefined && cur.loaded, true);
     }
+}
+
+export function GbmmVueMixin<T extends Constructor<{}> | AbstractConstructor<{}>>(SuperClass: T) {
+    return GbmmVue;
 }

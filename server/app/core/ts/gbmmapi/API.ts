@@ -7,6 +7,7 @@ import VideoShowsAPI from "./VideoShowsAPI";
 import SettingsAPI from "./SettingsAPI";
 import VideoCategoriesAPI from "./VideoCategoriesAPI";
 import SystemAPI from "./SystemAPI";
+import SubscriptionsAPI from "./SubscriptionsAPI";
 
 export interface ResponseData {
 
@@ -35,6 +36,7 @@ export default class API {
     public static readonly videoCategories = VideoCategoriesAPI
     public static readonly videoShows = VideoShowsAPI
     public static readonly settings = SettingsAPI
+    public static readonly subscriptions = SubscriptionsAPI
     public static readonly system = SystemAPI
 }
 

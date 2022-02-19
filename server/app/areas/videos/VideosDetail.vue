@@ -37,7 +37,8 @@ import Icon from "../../core/components/Icon.vue";
 import Download from "../../core/ts/Download";
 import Video from "../../core/ts/Video";
 import DownloadProgress from "../../core/components/DownloadProgress.vue";
-import GbmmVue from "../../core/ts/GbmmVue";
+import SubscriberVue, {Interest} from "../../core/ts/Subscriber"
+import {Message, MessageSubjectType} from "../../core/ts/gbmmapi/SubscriptionsAPI";
 
 @Component({
     components: {
@@ -45,8 +46,8 @@ import GbmmVue from "../../core/ts/GbmmVue";
         DownloadProgress
     }
 })
-export default class VideosDetail extends GbmmVue {
-    public id: number = parseInt(this.$route.params.id)
+export default class VideosDetail extends SubscriberVue {
+    public id: number = parseInt(this.$route.params.id);
     public vm: VideosDetailVM = {
         download: null,
         video: null
@@ -54,17 +55,22 @@ export default class VideosDetail extends GbmmVue {
 
     public created() {
         this.areaTitle = 'Video';
+        this.addInterest(MessageSubjectType.Download);
         this.load();
     }
 
     public async load() {
         this.vm.video = await Video.get({id: this.id});
-        this.vm.download = await Download.get({obj_item_name: 'video', obj_id: this.id}, true)
+        this.vm.download = await Download.get({obj_item_name: 'video', obj_id: this.id})
         this.pageTitle = this.vm.video?.name;
     }
 
     public enqueue_download = () => {
-        Download.enqueue({obj_item_name: 'video', obj_id: this.vm.video.id}, true).then(d => this.vm.download = d);
+        Download.enqueue({obj_item_name: 'video', obj_id: this.vm.video.id}).then(d => this.vm.download = d);
+    }
+
+    public receive_message(message: Message) {
+        console.debug('Message received.', message);
     }
 }
 

@@ -5,6 +5,8 @@
             <h5 class="mb-3">System Controls</h5>
             <label class="me-3 form-label fw-500">Update Index</label>
             <small class="text-muted">Refresh the video index. A quick update pulls new videos since the last index update. A full update refreshes the full index. A full update can take several minutes.</small>
+            <br>
+            <small>Last refresh: </small>
             <icon-button :click="() => updateIndex('quick')" :icon="'lightning-fill'" :text="'Quick Update'" class="btn-outline-primary me-2"></icon-button>
             <icon-button :click="() => updateIndex('full')" :icon="'arrow-clockwise'" :text="'Full Update'" class="btn-outline-primary me-2"></icon-button>
         </div>

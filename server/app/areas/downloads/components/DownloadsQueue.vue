@@ -63,7 +63,7 @@ export default class DownloadsQueue extends GbmmVue {
 
     public created() {
         this.load();
-        this.interval = window.setInterval(this.refresh, 1000);
+        // TODO add subscriber
     }
 
     public async load() {
@@ -84,10 +84,6 @@ export default class DownloadsQueue extends GbmmVue {
         this.vm.page = this.vm.downloadsInQueue.metadata.current_page;
         this.vm.totalPages = this.vm.downloadsInQueue.metadata.total_pages;
         this.vm.totalResults = this.vm.downloadsInQueue.metadata.total_results;
-    }
-
-    public refresh = () => {
-        this.load();
     }
 
     @Watch('$route')
