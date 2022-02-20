@@ -39,6 +39,7 @@ import Video from "../../core/ts/Video";
 import DownloadProgress from "../../core/components/DownloadProgress.vue";
 import SubscriberVue, {Interest} from "../../core/ts/Subscriber"
 import {Message, MessageSubjectType} from "../../core/ts/gbmmapi/SubscriptionsAPI";
+import GbmmVue from "../../core/ts/GbmmVue";
 
 @Component({
     components: {
@@ -46,7 +47,7 @@ import {Message, MessageSubjectType} from "../../core/ts/gbmmapi/SubscriptionsAP
         DownloadProgress
     }
 })
-export default class VideosDetail extends SubscriberVue {
+export default class VideosDetail extends GbmmVue {
     public id: number = parseInt(this.$route.params.id);
     public vm: VideosDetailVM = {
         download: null,
@@ -55,7 +56,6 @@ export default class VideosDetail extends SubscriberVue {
 
     public created() {
         this.areaTitle = 'Video';
-        this.addInterest(MessageSubjectType.Download);
         this.load();
     }
 
@@ -67,10 +67,6 @@ export default class VideosDetail extends SubscriberVue {
 
     public enqueue_download = () => {
         Download.enqueue({obj_item_name: 'video', obj_id: this.vm.video.id}).then(d => this.vm.download = d);
-    }
-
-    public receive_message(message: Message) {
-        console.debug('Message received.', message);
     }
 }
 

@@ -4,6 +4,8 @@ import uuid
 from enum import Enum
 from threading import Lock
 
+from server.serialization import Marshmallowable, MessageSchema
+
 
 class SubscriberNotFoundException(RuntimeError):
     pass
@@ -27,16 +29,30 @@ class MessageEventType(Enum):
         }
 
 
-class Message:
-    def __init__(self, event_type: MessageEventType, subject_type: type, subject: any):
+def convert_event_types_from_id(event_type_ids: list[int]) -> set[MessageEventType]:
+    return set([MessageEventType(t) for t in event_type_ids])
+
+
+def convert_event_types_to_id(event_types: set[MessageEventType]) -> list[int]:
+    return [t.value for t in event_types]
+
+
+class Message(Marshmallowable):
+    __marshmallow_schema__ = MessageSchema
+
+    def __init__(self, event_type: MessageEventType, subject_type: str, subject: Marshmallowable):
         self.event_type = event_type
         self.subject_type = subject_type
         self.subject_id = subject.id
-        self.data = subject
+        self.data = subject.dump()
+
+    @property
+    def event_type_id(self):
+        return self.event_type.value
 
 
 class Interest:
-    def __init__(self, subject_type: type, event_types: set[MessageEventType] = None):
+    def __init__(self, subject_type: str, event_types: set[MessageEventType] = None):
         if event_types is None:
             event_types = MessageEventType.all()
         self.subject_type = subject_type
@@ -49,7 +65,7 @@ class Subscriber:
         self.interests: list[Interest] = []
         self.__messenger = messenger
 
-    def add_interest(self, subject_type: type, event_types: set[MessageEventType] = None):
+    def add_interest(self, subject_type: str, event_types: set[MessageEventType] = None):
         interest = Interest(subject_type, event_types)
         existing = next((i for i in self.interests if i.subject_type is interest.subject_type), None)
         if existing is not None:
@@ -57,7 +73,7 @@ class Subscriber:
         else:
             self.interests.append(interest)
 
-    def remove_interest(self, subject_type: type, event_types: set[MessageEventType] = None):
+    def remove_interest(self, subject_type: str, event_types: set[MessageEventType] = None):
         interest = Interest(subject_type, event_types)
         existing = next((i for i in self.interests if i.subject_type is interest.subject_type), None)
         if existing is not None:
@@ -68,10 +84,10 @@ class Subscriber:
     def set_interests(self, interests: list[Interest]):
         self.interests = interests
 
-    def interested(self, subject_type: type, event_type: MessageEventType):
+    def interested(self, subject_type: str, event_type: MessageEventType):
         return len([
             i for i in self.interests
-            if i.subject_type is subject_type
+            if i.subject_type == subject_type
             and event_type in i.event_types
         ]) > 0
 
@@ -169,4 +185,4 @@ def remove_subscriber(subscriber_uuid: uuid.UUID):
 
 
 def publish(event_type: MessageEventType, subject_type: type, subject: any):
-    __messenger.send(Message(event_type, subject_type, subject))
+    __messenger.send(Message(event_type, subject_type.__name__, subject))

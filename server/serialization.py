@@ -209,3 +209,10 @@ class VideoCategorySchema(Schema):
     '''Main image of the video_category.'''
     site_detail_url = fields.Str()
     '''URL pointing to the video_category on Giant Bomb.'''
+
+
+class MessageSchema(Schema):
+    event_type = fields.Int(attribute='event_type_id')
+    subject_type = fields.Str()
+    subject_id = fields.Int()
+    data = fields.Raw()

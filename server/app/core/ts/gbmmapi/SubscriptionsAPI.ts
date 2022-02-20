@@ -1,9 +1,8 @@
 import axios from "axios";
 import {ResponseData} from "./API";
 
-export enum MessageSubjectType {
-    Download
-}
+// TODO grab this from a definition on the server
+export type MessageSubjectType = 'Download'
 
 export enum MessageEventType {
     Created = 0,
@@ -68,6 +67,14 @@ export default class SubscriptionsAPI {
     }
 
     public static setInterests(uuid: string, data: InterestsParams) {
-        return axios.post(`/api/subscriptions/${uuid}/set-interests`, data);
+        let convdata: {
+            interests: {subjectType: MessageSubjectType, eventType: MessageEventType[]}[]
+        } = {
+            interests: []
+        };
+        for (const interest of data.interests) {
+            convdata.interests.push({subjectType: interest.subjectType, eventType: Array.from(interest.eventType)});
+        }
+        return axios.post(`/api/subscriptions/${uuid}/set-interests`, convdata);
     }
 }

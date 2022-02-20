@@ -277,14 +277,14 @@ export class Interest {
 }
 
 class PollerInterestManager {
-    private readonly interestsToSubscribers: {[subjectType: number]: {[eventType: number]: Subscriber[]}};
+    private readonly interestsToSubscribers: {[subjectType: string]: {[eventType: number]: Subscriber[]}};
     private uniqueInterests: Interest[];
     private uniqueInterestRecalculationNeeded: boolean;
 
     public interestsUpdated: LiteEvent<PollerInterestManager>;
 
     public constructor() {
-        this.interestsToSubscribers = [];
+        this.interestsToSubscribers = {};
         this.uniqueInterests = [];
         this.uniqueInterestRecalculationNeeded = false;
         this.interestsUpdated = new LiteEvent<PollerInterestManager>();
@@ -321,7 +321,7 @@ class PollerInterestManager {
         if (this.uniqueInterestRecalculationNeeded) {
             this.uniqueInterests = [];
             for (const subjectTypeKey in this.interestsToSubscribers) {
-                const subjectType: MessageSubjectType = parseInt(subjectTypeKey);
+                const subjectType: MessageSubjectType = <MessageSubjectType>subjectTypeKey;
                 let interest = new Interest(subjectType, new Set<MessageEventType>());
                 for (const eventTypeKey in this.interestsToSubscribers[subjectType]) {
                     const eventType: MessageEventType = parseInt(eventTypeKey);
@@ -375,7 +375,7 @@ class PollerInterestManager {
         //      both simultaneously. Currently just looping through every list that exists. This optimization probably
         //      isn't useful unless total subscribers grows large.
         for (const subjectTypeKey in this.interestsToSubscribers) {
-            const subjectType: MessageSubjectType = parseInt(subjectTypeKey);
+            const subjectType: MessageSubjectType = <MessageSubjectType>subjectTypeKey;
             for (const eventTypeKey in this.interestsToSubscribers[subjectTypeKey]) {
                 const eventType = parseInt(eventTypeKey);
                 this.removeSubscriberInterest(subjectType, eventType, subscriber);

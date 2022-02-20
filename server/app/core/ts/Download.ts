@@ -35,7 +35,7 @@ export default class Download extends Loadable {
         super();
         this.definitions = definitions;
         if (validResponseData(data)) {
-            this.updateFromResponseData(data);
+            this.update(data);
         }
         this.loaded = true;
     }
@@ -58,7 +58,7 @@ export default class Download extends Loadable {
         return new Download(response.data, definitions);
     }
 
-    private updateFromResponseData(data: DownloadResponseData) {
+    public update(data: DownloadResponseData) {
         if (!validResponseData(data)) return;
         this.valid = true;
         this.id = data.id;

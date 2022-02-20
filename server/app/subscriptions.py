@@ -1,14 +1,19 @@
 import uuid as uuid
+from enum import Enum
+
 from flask import Blueprint
 from sqlalchemy import select
 
 from server import messenger
-from server.app.flask_helpers import ok, json_data, api_key_required
+from server.app.flask_helpers import ok, json_data, api_key_required, dump
 from config import config
-from server.database import Session, Setting
-from server.messenger import Interest
+from server.messenger import Interest, MessageEventType
 
 bp = Blueprint('subscriptions', config.SERVER_NAME, url_prefix='/api/subscriptions')
+
+
+def convert_event_types_from_id(event_type_ids: list[int]) -> set[MessageEventType]:
+    return set([MessageEventType(t) for t in event_type_ids])
 
 
 @bp.route('/subscribe', methods=('POST',))
@@ -35,7 +40,7 @@ def get(subscriber_uuid: uuid.UUID):
     except messenger.SubscriberNotFoundException:
         out['messages'] = []
     finally:
-        return out
+        return dump(out)
 
 
 @bp.route('/<uuid:subscriber_uuid>/add-interests', methods=('POST',))
@@ -63,7 +68,11 @@ def remove_interests(subscriber_uuid: uuid.UUID):
 @bp.route('/<uuid:subscriber_uuid>/set-interests', methods=('POST',))
 def set_interests(subscriber_uuid: uuid.UUID):
     data = json_data(required=True)
-    interests = [Interest(i.get('subjectType'), set(i.get('eventType'))) for i in data.get('interests', list)]
+    interests: list[Interest] = []
+    for i in data.get('interests', list):
+        subject_type = i.get('subjectType')
+        event_types = convert_event_types_from_id(i.get('eventType'))
+        interests.append(Interest(subject_type, event_types))
     subscriber = messenger.get_subscriber(subscriber_uuid)
     subscriber.set_interests(interests)
     return ok()

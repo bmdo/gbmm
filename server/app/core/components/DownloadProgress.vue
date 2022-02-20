@@ -16,11 +16,21 @@
 import {Component, Prop} from "vue-property-decorator";
 import Download from '../ts/Download';
 import GbmmVue from "../ts/GbmmVue";
+import SubscriberVue from "../ts/Subscriber";
+import {Message, MessageSubjectType} from "../ts/gbmmapi/SubscriptionsAPI";
 
 @Component({})
-export default class DownloadProgress extends GbmmVue {
-  @Prop()
-  public download!: Download
+export default class DownloadProgress extends SubscriberVue {
+    @Prop()
+    public download!: Download
+
+    public created() {
+        this.addInterest('Download');
+    }
+
+    public async receive_message(message: Message) {
+        this.download.update(message.data);
+    }
 }
 </script>
 
