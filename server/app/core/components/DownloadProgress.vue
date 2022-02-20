@@ -15,9 +15,8 @@
 <script lang="ts">
 import {Component, Prop} from "vue-property-decorator";
 import Download from '../ts/Download';
-import GbmmVue from "../ts/GbmmVue";
 import SubscriberVue from "../ts/Subscriber";
-import {Message, MessageSubjectType} from "../ts/gbmmapi/SubscriptionsAPI";
+import {Message} from "../ts/gbmmapi/SubscriptionsAPI";
 
 @Component({})
 export default class DownloadProgress extends SubscriberVue {
