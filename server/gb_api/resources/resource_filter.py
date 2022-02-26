@@ -35,7 +35,8 @@ class ResourceFilterList(list[ResourceFilter]):
         """Sets the value of the filter with the given name."""
         f = self.get(filter_name)
         if f is None:
-            raise ValueError(f'Invalid filter name "{filter_name}". Available filters are {[f.name for f in self]}.')
+            raise ValueError(f'Invalid filter name "{filter_name}". Available filters are '
+                             f'{str.join(",", [f.name for f in self])}.')
         f.set(value)
 
     def clear_filter(self, filter_name: str):
