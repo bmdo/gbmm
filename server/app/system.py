@@ -23,7 +23,8 @@ def start():
     with Session.begin() as session:
         state = SystemState.get(session)
         # Resume the full indexer if it was in progress during last shutdown
-        Indexer.resume_full_indexer(session)
+        # TODO Restore this
+        # Indexer.resume_full_indexer(session)
         # Clear quick indexer "in progress" flag if it was running during last shutdown
         state.indexer_quick__in_progress = False
 

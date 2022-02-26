@@ -163,16 +163,26 @@ class SystemStateStorage(Base):
     __tablename__ = 'system'
     id = Column(String, primary_key=True)
     indexer_full__last_update = Column(DateTime)
-    indexer_full__in_progress = Column(Boolean)
-    indexer_full__total_results = Column(Integer)
-    indexer_full__processed_results = Column(Integer)
     indexer_quick__last_update = Column(DateTime)
-    indexer_quick__in_progress = Column(Boolean)
-    indexer_quick__total_results = Column(Integer)
-    indexer_quick__processed_results = Column(Integer)
     db__version = Column(String)
     first_time_setup__initiated = Column(Boolean)
     first_time_setup__complete = Column(Boolean)
+
+
+class BackgroundJobStorage(Base):
+    __tablename__ = 'background_jobs'
+    uuid = Column(String, primary_key=True)
+    'The unique identifier for this BackgroundJob.'
+    name = Column(String)
+    'The name of this background job type this BackgroundJob belongs to.'
+    thread = Column(Integer)
+    'The ID of the thread on which this BackgroundJob is running.'
+    state = Column(Integer)
+    'The state of the background job (E.g., not started, running, paused, stopped, complete).'
+    progress_denominator = Column(Integer)
+    'The number that represents all of the progress this BackgroundJob will have made when complete.'
+    progress_current = Column(Integer)
+    'The number that represents the current progress of the BackgroundJob.'
 
 
 class File(Base, Marshmallowable):
