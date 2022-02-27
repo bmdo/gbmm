@@ -187,6 +187,10 @@ class BackgroundJobStorage(Base):
     'Whether or not this background job can be paused and resumed.'
     recoverable = Column(Boolean)
     'Whether or not this background job can be recovered after a system restart.'
+    created = Column(DateTime)
+    'The time when this background job was created.'
+    started = Column(DateTime)
+    'The time when this background job was started.'
     thread = Column(Integer)
     'The ID of the thread on which this BackgroundJob is running.'
     state = Column(Integer)
@@ -203,6 +207,12 @@ class BackgroundJobArchive(Base):
     'The unique identifier for this BackgroundJob.'
     name = Column(String)
     'The name of this background job type this BackgroundJob belongs to.'
+    created = Column(DateTime)
+    'The time when this background job was created.'
+    started = Column(DateTime)
+    'The time when this background job was started.'
+    ended = Column(DateTime)
+    'The time when this background job ended.'
     thread = Column(Integer)
     'The ID of the thread on which this BackgroundJob was running.'
     state = Column(Integer)

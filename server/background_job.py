@@ -1,3 +1,4 @@
+import datetime
 import logging
 import threading
 
@@ -57,7 +58,9 @@ class BackgroundJob(ABC):
                 name=self.__class__.__name__,
                 pauseable=self._pauseable,
                 recoverable=self._recoverable,
-                thread=-1,
+                created=datetime.datetime.now(),
+                started=None,
+                thread=None,
                 state=BackgroundJobState.NotStarted,
                 progress_denominator=0,
                 progress_current=0
@@ -232,6 +235,9 @@ class BackgroundJob(ABC):
             archive = BackgroundJobArchive(
                 uuid=storage.uuid,
                 name=storage.name,
+                created=storage.created,
+                started=storage.started,
+                ended=datetime.datetime.now(),
                 thread=storage.thread,
                 state=storage.state,
                 progress_denominator=storage.progress_denominator,
