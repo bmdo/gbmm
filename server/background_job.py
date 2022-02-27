@@ -117,6 +117,7 @@ class BackgroundJob(ABC):
             self.logger.debug(f'Starting background job {name} with UUID {uuident}.')
             self.__thread = threading.Thread(target=self._run, name=name, daemon=True)
             self.__thread.start()
+            storage.started = datetime.datetime.now()
             storage.thread = self.__thread.ident
             self.logger.debug(f'Background job started on thread {self.__thread.ident}.')
 
