@@ -1,11 +1,13 @@
-from typing import Type, Optional
+from typing import Type, Optional, Literal
 from .resource_filter import ResourceFilter, ResourceFilterList
 from .resource import SingleResultResource, MultipleResultResource, Resource
 from server import database
 from ..response_metadata import ResponseMetadata
 
+ExtraFilters = list[Literal['publish_date', 'platforms', 'games', 'subscriber_only']]
 
-def new_collection_filters(platforms: bool = False, game: bool = False, subscriber_only: bool = False):
+
+def new_collection_filters(extras: ExtraFilters):
     filter_list = ResourceFilterList([
         ResourceFilter('format', str),
         ResourceFilter('field_list', str),
@@ -14,15 +16,19 @@ def new_collection_filters(platforms: bool = False, game: bool = False, subscrib
         ResourceFilter('sort', str),
         ResourceFilter('filter', str)
     ])
-    if platforms:
+    if 'publish_date' in extras:
+        filter_list.append(
+            ResourceFilter('publish_date', str)
+        )
+    if 'platforms' in extras:
         filter_list.append(
             ResourceFilter('platforms', int)
         )
-    if game:
+    if 'game' in extras:
         filter_list.append(
             ResourceFilter('game', int)
         )
-    if subscriber_only:
+    if 'subscriber_only' in extras:
         filter_list.append(
             ResourceFilter('subscriber_only', int)
         )
@@ -52,20 +58,14 @@ class SingleResultResourceFactory(ResourceFactory):
 class MultipleResultResourceFactory(ResourceFactory):
     def __init__(self,
                  result_entity_type: Type[database.GBEntity],
-                 platforms_filter: bool = False,
-                 game_filter: bool = False,
-                 subscriber_only_filter: bool = False):
+                 extra_filters: ExtraFilters = None):
         super().__init__(result_entity_type)
-        self.platforms_filter = platforms_filter
-        self.game_filter = game_filter
-        self.subscriber_only = subscriber_only_filter
+        if extra_filters is None:
+            extra_filters = []
+        self.extra_filters = extra_filters
 
     def new(self, metadata: ResponseMetadata = None) -> MultipleResultResource:
-        filters = new_collection_filters(
-            platforms=self.platforms_filter,
-            game=self.game_filter,
-            subscriber_only=self.subscriber_only
-        )
+        filters = new_collection_filters(self.extra_filters)
         return MultipleResultResource(
             self.result_entity_type.__collection_name__,
             filters,
@@ -330,7 +330,7 @@ class CollectionResourceFactoryCollection(ResourceFactoryCollection):
         #     collection_filters(game=True),
         #     api_objs.user_review
         # )
-        self.videos = MultipleResultResourceFactory(database.Video, subscriber_only_filter=True)
+        self.videos = MultipleResultResourceFactory(database.Video, extra_filters=['publish_date', 'subscriber_only'])
         self.video_categories = MultipleResultResourceFactory(database.VideoCategory)
         self.video_shows = MultipleResultResourceFactory(database.VideoShow)
 

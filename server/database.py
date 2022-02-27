@@ -1,7 +1,7 @@
+import enum
 import os
 import json
 from datetime import datetime
-from enum import IntEnum
 from pathlib import Path
 from typing import Type, Callable, Generator
 
@@ -170,6 +170,13 @@ class SystemStateStorage(Base):
 
 
 class BackgroundJobStorage(Base):
+    class BackgroundJobState:
+        NotStarted = 0
+        Running = 1
+        Paused = 2
+        Stopped = 3
+        Complete = 4
+
     __tablename__ = 'background_jobs'
     uuid = Column(String, primary_key=True)
     'The unique identifier for this BackgroundJob.'
@@ -253,7 +260,7 @@ class Download(Base, Marshmallowable):
     _response_headers = Column('response_headers', String)
     '''Full set of headers returned with the download request as serialized JSON.'''
 
-    class DownloadStatus(IntEnum):
+    class DownloadStatus(enum.IntEnum):
         QUEUED = 10
         IN_PROGRESS = 20
         PAUSED = 30
