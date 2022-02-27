@@ -1,6 +1,6 @@
 from sqlalchemy import select
-
-from server.database import Session, SystemStateStorage
+from sqlalchemy.orm import Session
+from server.database import SystemStateStorage
 
 
 class SystemState:

@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from server.app.flask_helpers import ok, json_data, api_key_required
 from config import config
-from server.database import Session, Setting
+from server.database import SessionMaker, Setting
 
 bp = Blueprint('settings', config.SERVER_NAME, url_prefix='/api/settings')
 

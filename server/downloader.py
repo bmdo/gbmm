@@ -4,6 +4,7 @@ from pathlib import Path
 import logging
 import requests
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 from tqdm import tqdm
 import sys
 import traceback
@@ -11,7 +12,7 @@ import traceback
 from config import config
 import server.gb_api as gb_api
 from server import database
-from server.database import Session, File, Download, DatabaseError, GBDownloadable
+from server.database import SessionMaker, File, Download, DatabaseError, GBDownloadable
 
 
 class DownloadFailedError(Exception):
@@ -27,7 +28,7 @@ class Downloader:
         self.logger = logging.getLogger('gbmm').getChild('downloader')
         self.__download_pushed_condition = threading.Condition()
         self.logger.debug('Starting downloader daemon')
-        self.session = Session()
+        self.session = SessionMaker()
         self.__daemon = threading.Thread(target=self.__processor, daemon=True).start()
 
     @staticmethod

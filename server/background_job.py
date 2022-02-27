@@ -1,38 +1,74 @@
 import logging
 import threading
 
-from abc import ABC, abstractmethod
-from typing import Optional
+from abc import ABC
+from typing import Optional, TypeVar, Type
 
 import uuid
 
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
-from server.database import Session, BackgroundJobStorage
-
+from server.database import BackgroundJobStorage, BackgroundJobArchive
 
 BackgroundJobState = BackgroundJobStorage.BackgroundJobState
+
+T = TypeVar('T', bound='BackgroundJob')
 
 
 class BackgroundJobException(RuntimeError):
     pass
 
 
+class BackgroundJobData:
+    def __init__(self):
+        self.__data: dict = {}
+
+    def get(self, key: str):
+        try:
+            return self.__data[key]
+        except KeyError:
+            self.__data[key] = None
+            return self.__data[key]
+
+    def set(self, key: str, value: any):
+        self.__data[key] = value
+
+
 class BackgroundJob(ABC):
-    _name: str = 'unknown_background_job'
+    _pauseable: bool = False
+    _recoverable: bool = False
+    _logger_suffix: str = 'BackgroundJob'
 
-    def __init__(self, session: Session, name: str):
-        self.__uuid = uuid.uuid1()
+    def _run(self):
+        pass
 
-        storage = BackgroundJobStorage(
-            uuid=str(self.__uuid),
-            name=name,
-            thread=-1,
-            state=BackgroundJobState.NotStarted,
-            progress_denominator=0,
-            progress_current=0
-        )
-        session.add(storage)
+    def _resume(self):
+        pass
+
+    def _recover(self):
+        pass
+
+    def __init__(self, session: Session, *, storage: BackgroundJobStorage = None):
+        if storage is not None:
+            # Retrieving this BackgroundJob from storage
+            job_uuid = uuid.UUID(storage.uuid)
+        else:
+            # Creating a new BackgroundJob
+            job_uuid = uuid.uuid1()
+            storage = BackgroundJobStorage(
+                uuid=str(job_uuid),
+                name=self.__class__.__name__,
+                pauseable=self._pauseable,
+                recoverable=self._recoverable,
+                thread=-1,
+                state=BackgroundJobState.NotStarted,
+                progress_denominator=0,
+                progress_current=0
+            )
+            session.add(storage)
+
+        self.__uuid = job_uuid
 
         self.__thread: Optional[threading.Thread] = None
         'The thread this background job is running on.'
@@ -43,36 +79,21 @@ class BackgroundJob(ABC):
         self.__pause_requested: bool = False
         self.__stop_requested: bool = False
 
-        self._logger: logging.Logger = logging.getLogger('gbmm.BackgroundJob')
-        self._logger.debug(f'Created background job {name} with UUID {self.__uuid}.')
+        self.logger: logging.Logger = logging.getLogger('gbmm.BackgroundJob').getChild(self._logger_suffix)
+        self.logger.debug(f'Created background job {self.__class__.__name__} with UUID {self.__uuid}.')
+
+        self.data = BackgroundJobData()
 
     @classmethod
-    def get(cls, session: Session, *, job_uuid: uuid.UUID = None, name: str = None) -> list['BackgroundJob']:
+    def get_all(cls: T, session: Session) -> list[T]:
         """
-        Get existing :class:`BackgroundJob`\\s matching the given criteria.
+        Get all existing :class:`BackgroundJob`\\s of the same subclass.
 
-        If no criteria are supplied, returns all existing :class:`BackgroundJob`\\s.
+        If no criteria are supplied, returns all existing :class:`BackgroundJob`\\s of the same subclass.
 
-        :return: The list of BackgroundJobs matching the given criteria.
+        :return: The list of BackgroundJobs of the same subclass matching the given criteria.
         """
-
-        s = select(BackgroundJobStorage)
-        if job_uuid is not None:
-            s.filter_by(uuid=job_uuid)
-        if name is not None:
-            s.filter_by(name=name)
-        return session.execute(s).scalars().all()
-
-    @classmethod
-    def get_jobs_of_same_type(cls, session: Session) -> list['BackgroundJob']:
-        """
-        Get existing :class:`FullIndexerBackgroundJob`\\s matching the given criteria.
-
-        If no criteria are supplied, returns all existing :class:`FullIndexerBackgroundJob`\\s.
-
-        :return: The list of FullIndexerBackgroundJob matching the given criteria.
-        """
-        return cls.get(session, name=cls._name)
+        return get_all(session, name=cls.__name__)
 
     def start(self, session: Session):
         with self.__thread_lock:
@@ -80,67 +101,79 @@ class BackgroundJob(ABC):
             name = storage.name
             uuident = storage.uuid
             if self.running(session):
-                self._logger.warning(f'Start attempted for background job {name} with UUID {uuident}, but the '
-                                     f'job is already starting or has started.')
+                self.logger.warning(f'Start attempted for background job {name} with UUID {uuident}, but the '
+                                    f'job is already starting or has started.')
                 raise BackgroundJobException()
 
             if self.__pause_requested or self.paused(session):
-                self._logger.warning(f'Start attempted for background job {name} with UUID {uuident}, but the '
-                                     f'job is pausing or has paused.')
+                self.logger.warning(f'Start attempted for background job {name} with UUID {uuident}, but the '
+                                    f'job is pausing or has paused.')
                 raise BackgroundJobException()
 
             if self.__stop_requested or self.stopped(session):
-                self._logger.warning(f'Start attempted for background job {name} with UUID {uuident}, but the '
-                                     f'job is stopping or has stopped.')
+                self.logger.warning(f'Start attempted for background job {name} with UUID {uuident}, but the '
+                                    f'job is stopping or has stopped.')
                 raise BackgroundJobException()
 
             storage.state = BackgroundJobState.Running
 
-            self._logger.debug(f'Starting background job {name} with UUID {uuident}.')
+            self.logger.debug(f'Starting background job {name} with UUID {uuident}.')
             self.__thread = threading.Thread(target=self._run, name=name, daemon=True)
             self.__thread.start()
-            self._logger.debug(f'Background job started on thread {self.__thread.ident}.')
+            self.logger.debug(f'Background job started on thread {self.__thread.ident}.')
 
     def resume(self, session: Session):
         with self.__thread_lock:
             storage = self.__get_storage(session)
             name = storage.name
             uuident = storage.uuid
+
+            if not storage.pauseable:
+                self.logger.warning(f'Resume attempted for background job {name} with UUID {uuident}, but it is of a '
+                                    f'job type that cannot be paused.')
+                raise BackgroundJobException()
+
             if self.__pause_requested:
-                self._logger.warning(f'Resume attempted for background job {name} with UUID {uuident}, but the '
-                                     f'job is in the process of pausing and cannot yet be resumed.')
+                self.logger.warning(f'Resume attempted for background job {name} with UUID {uuident}, but the '
+                                    f'job is in the process of pausing and cannot yet be resumed.')
                 raise BackgroundJobException()
 
             if not self.paused(session):
-                self._logger.warning(f'Resume attempted for background job {name} with UUID {uuident}, but the '
-                                     f'job is not paused.')
+                self.logger.warning(f'Resume attempted for background job {name} with UUID {uuident}, but the '
+                                    f'job is not paused.')
                 raise BackgroundJobException()
 
             storage.state = BackgroundJobState.Running
 
-            self._logger.debug(f'Resuming background job {name} with UUID {uuident}.')
-            self.__thread = threading.Thread(target=self._resume_run, name=name, daemon=True)
+            self.logger.debug(f'Resuming background job {name} with UUID {uuident}.')
+            self.__thread = threading.Thread(target=self._resume, name=name, daemon=True)
             self.__thread.start()
-            self._logger.debug(f'Background job started on thread {self.__thread.ident}.')
+            self.logger.debug(f'Background job started on thread {self.__thread.ident}.')
 
     def pause(self, session: Session):
         with self.__thread_lock:
             storage = self.__get_storage(session)
             name = storage.name
             uuident = storage.uuid
+
+            if not storage.pauseable:
+                self.logger.warning(f'Pause attempted for background job {name} with UUID {uuident}, but it is of a '
+                                    f'job type that cannot be paused.')
+                raise BackgroundJobException()
+
             if not self.running(session):
-                self._logger.warning(f'Pause requested for background job {name} with UUID {uuident}, but the '
-                                     f'job is not running.')
-                return
+                self.logger.warning(f'Pause requested for background job {name} with UUID {uuident}, but the '
+                                    f'job is not running.')
+                raise BackgroundJobException()
 
             if self.__pause_requested or self.__stop_requested:
-                self._logger.warning(f'Pause requested for background job {name} with UUID {uuident}, but the '
-                                     f'job is already in the process of pausing or stopping.')
-                return
+                self.logger.warning(f'Pause requested for background job {name} with UUID {uuident}, but the '
+                                    f'job is already in the process of pausing or stopping.')
+                raise BackgroundJobException()
 
             self.__pause_requested = True
 
-            self._logger.debug(f'Pause requested for background job {name} with UUID {uuident}.')
+            self.logger.debug(f'Pause requested for background job {name} with UUID {uuident}.')
 
     def stop(self, session: Session):
         with self.__thread_lock:
@@ -152,22 +185,82 @@ class BackgroundJob(ABC):
             self.__pause_requested = False
 
             if self.stopped(session) or self.__stop_requested:
-                self._logger.warning(f'Stop requested for background job {name} with UUID {uuident}, but the '
-                                     f'job was already stopped.')
-                return
+                self.logger.warning(f'Stop requested for background job {name} with UUID {uuident}, but the '
+                                    f'job was already stopped.')
+                raise BackgroundJobException()
 
             if not self.running(session) and not self.paused(session):
-                self._logger.warning(f'Stop requested for background job {name} with UUID {uuident}, but the '
-                                     f'job was never started.')
-                return
+                self.logger.warning(f'Stop requested for background job {name} with UUID {uuident}, but the '
+                                    f'job was never started.')
+                raise BackgroundJobException()
 
             self.__stop_requested = True
 
-            self._logger.debug(f'Stop requested for background job {name} with UUID {uuident} running on thread'
-                               f'{self.__thread.ident}.')
+            self.logger.debug(f'Stop requested for background job {name} with UUID {uuident} running on thread'
+                              f'{self.__thread.ident}.')
+
+    def recover(self, session: Session):
+        """
+        Recover from system restart.
+
+        :param session: A SQLAlchemy session
+        """
+        with self.__thread_lock:
+            storage = self.__get_storage(session)
+            name = storage.name
+            uuident = storage.uuid
+
+            if not self._recoverable:
+                self.logger.warning(f'Recover requested for background job {name} with UUID {uuident}, but the '
+                                    f'job is of a type that is not recoverable.')
+                raise BackgroundJobException()
+
+            if self.stopped(session) or self.__stop_requested:
+                self.logger.warning(f'Recover requested for background job {name} with UUID {uuident}, but the '
+                                    f'job was stopped and cannot be recovered.')
+                raise BackgroundJobException()
+
+            if self.running(session) or self.paused(session):
+                storage.state = BackgroundJobState.Running
+                self.logger.debug(f'Recovering background job {name} with UUID {uuident}.')
+                self.__thread = threading.Thread(target=self._recover, name=name, daemon=True)
+                self.__thread.start()
+                self.logger.debug(f'Background job started on thread {self.__thread.ident}.')
+
+            else:  # Probably never started
+                raise BackgroundJobException()
+
+    def archive(self, session: Session):
+        with self.__thread_lock:
+            storage = self.__get_storage(session)
+            archive = BackgroundJobArchive(
+                uuid=storage.uuid,
+                name=storage.name,
+                thread=storage.thread,
+                state=storage.state,
+                progress_denominator=storage.progress_denominator,
+                progress_current=storage.progress_current
+            )
+            session.add(archive)
+            session.query(BackgroundJobStorage).filter_by(uuid=storage.uuid).delete()
+
+    def fail(self, session: Session):
+        with self.__thread_lock:
+            storage = self.__get_storage(session)
+            storage.state = BackgroundJobState.Failed
+            self.archive(session)
 
     def __get_storage(self, session: Session):
-        return session.query(BackgroundJobStorage).get(str(self.__uuid))
+        storage = session.query(BackgroundJobStorage).get(str(self.__uuid))
+        if storage is None:
+            self.logger.error(f'Attempted to retrieve background job with UUID {self.__uuid}, but a job with that'
+                              f'UUID does not exist in the database.')
+            raise BackgroundJobException()
+        return storage
+
+    @property
+    def uuid(self):
+        return self.__uuid
 
     @property
     def _should_pause(self):
@@ -184,6 +277,7 @@ class BackgroundJob(ABC):
     def _stop_complete(self, session: Session):
         self.__stop_requested = False
         self.__get_storage(session).state = BackgroundJobState.Stopped
+        self.archive(session)
 
     def running(self, session: Session):
         return self.__get_storage(session).state == BackgroundJobState.Running
@@ -227,12 +321,103 @@ class BackgroundJob(ABC):
             return 0
         return storage.progress_current / storage.progress_denominator
 
-    @abstractmethod
-    def _run(self):
-        pass
 
-    @abstractmethod
-    def _resume_run(self):
-        pass
+class BackgroundJobRegistryEntry:
+    def __init__(self, name: str, cls: Type[BackgroundJob]):
+        self.name = name
+        self.cls = cls
 
 
+def register(cls: Type[BackgroundJob]):
+    """
+    Class decorator for defining a background job.
+
+    :param cls: The class representing the background job.
+    :return: The decorated background job class.
+    """
+    __registry.append(cls)
+    fn_run = getattr(cls, '_run', None)
+    fn_resume = getattr(cls, '_resume', None)
+    fn_recover = getattr(cls, '_recover', None)
+
+    assert(fn_run is not None and callable(fn_run)), 'Background jobs must define a _run function.'
+
+    if fn_resume is not None:
+        cls._pauseable = True
+
+    if fn_recover is not None:
+        cls._recoverable = True
+
+    cls._logger_suffix = cls.__name__
+
+    return cls
+
+
+def get(session: Session,
+        *,
+        job_uuid: uuid.UUID = None,
+        name: str = None,
+        recoverable: bool = None) -> Optional[BackgroundJob]:
+    """
+    Get the first existing :class:`BackgroundJob` matching the given criteria.
+
+    If no criteria are supplied, returns the first existing :class:`BackgroundJob`.
+
+    If no :class:`BackgroundJob` matches the given criteria, returns None.
+
+    :return: The first of BackgroundJob matching the given criteria or None.
+    """
+    jobs = get_all(session, job_uuid=job_uuid, name=name, recoverable=recoverable)
+    if len(jobs) > 0:
+        return jobs[0]
+    else:
+        return None
+
+
+def get_all(session: Session,
+            *,
+            job_uuid: uuid.UUID = None,
+            name: str = None,
+            recoverable: bool = None) -> list[BackgroundJob]:
+    """
+    Get all existing :class:`BackgroundJob`\\s matching the given criteria.
+
+    If no criteria are supplied, returns all existing :class:`BackgroundJob`\\s.
+
+    If no :class:`BackgroundJob`\\s match the given criteria, returns an empty list.
+
+    :return: The list of BackgroundJobs matching the given criteria.
+    """
+
+    s = select(BackgroundJobStorage)
+    if job_uuid is not None:
+        s.filter_by(uuid=job_uuid)
+    if name is not None:
+        s.filter_by(name=name)
+    if recoverable is not None:
+        s.filter_by(recoverable=recoverable)
+    job_storages = session.execute(s).scalars().all()
+
+    out = []
+
+    for storage in job_storages:
+        cls = next((r for r in __registry if r.__name__ == storage.name), None)
+        if cls is None:
+            raise BackgroundJobException()
+        else:
+            out.append(cls(session, storage=storage))
+
+    return out
+
+
+def startup(session: Session):
+    not_recoverable = get_all(session, recoverable=False)
+    for job_storage in not_recoverable:
+        job = get(session, job_uuid=job_storage.uuid)
+        job.fail(session)
+    for job_storage in session.query(BackgroundJobStorage).scalars().all():  # Everything left is recoverable
+        job = get(session, job_uuid=job_storage.uuid)
+        job.recover(session)
+
+
+__registry: list[Type[BackgroundJob]] = []

@@ -13,8 +13,8 @@ from sqlalchemy.orm import declarative_base, relationship, sessionmaker, Mapper
 
 from config import config
 from server.messenger import publish, MessageEventType
-from server.serialization import FileSchema, Marshmallowable, DownloadSchema, ImageSchema, VideoSchema, VideoShowSchema, \
-    VideoCategorySchema, KeyValueSchema
+from server.serialization import FileSchema, Marshmallowable, DownloadSchema, ImageSchema, VideoSchema,\
+    VideoShowSchema, VideoCategorySchema, KeyValueSchema
 
 
 class DatabaseError(IOError):
@@ -43,7 +43,7 @@ db_path = os.path.join(config.DATABASE_DIR, config.DATABASE_NAME)
 Path(db_path).parent.absolute().mkdir(parents=True, exist_ok=True)
 db_url = f'sqlite+pysqlite:///{db_path}'
 engine = create_engine(db_url, future=True)
-Session = sessionmaker(engine)
+SessionMaker = sessionmaker(engine)
 Base = declarative_base(cls=Base)
 
 
@@ -176,16 +176,37 @@ class BackgroundJobStorage(Base):
         Paused = 2
         Stopped = 3
         Complete = 4
+        Failed = 5
 
     __tablename__ = 'background_jobs'
     uuid = Column(String, primary_key=True)
     'The unique identifier for this BackgroundJob.'
     name = Column(String)
     'The name of this background job type this BackgroundJob belongs to.'
+    pauseable = Column(Boolean)
+    'Whether or not this background job can be paused and resumed.'
+    recoverable = Column(Boolean)
+    'Whether or not this background job can be recovered after a system restart.'
     thread = Column(Integer)
     'The ID of the thread on which this BackgroundJob is running.'
     state = Column(Integer)
     'The state of the background job (E.g., not started, running, paused, stopped, complete).'
+    progress_denominator = Column(Integer)
+    'The number that represents all of the progress this BackgroundJob will have made when complete.'
+    progress_current = Column(Integer)
+    'The number that represents the current progress of the BackgroundJob.'
+
+
+class BackgroundJobArchive(Base):
+    __tablename__ = 'background_job_archives'
+    uuid = Column(String, primary_key=True)
+    'The unique identifier for this BackgroundJob.'
+    name = Column(String)
+    'The name of this background job type this BackgroundJob belongs to.'
+    thread = Column(Integer)
+    'The ID of the thread on which this BackgroundJob was running.'
+    state = Column(Integer)
+    'The final state of the background job (E.g., not started, running, paused, stopped, complete).'
     progress_denominator = Column(Integer)
     'The number that represents all of the progress this BackgroundJob will have made when complete.'
     progress_current = Column(Integer)

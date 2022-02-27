@@ -3,7 +3,7 @@ from sqlalchemy import select
 
 from server.app.flask_helpers import dump, ok, api_key_required
 from server.gb_api import GBAPI
-from server.database import Session, from_api, VideoShow, from_api_generator
+from server.database import SessionMaker, from_api, VideoShow, from_api_generator
 from config import config
 
 bp = Blueprint('video_shows', config.SERVER_NAME, url_prefix='/api/video-shows')
@@ -23,7 +23,7 @@ def refresh_shows(session):
 @bp.route('/refresh-all', methods=('GET',))
 @api_key_required
 def refresh_all():
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         refresh_shows(session)
         return ok()
 
@@ -31,7 +31,7 @@ def refresh_all():
 @bp.route('/get-all', methods=('GET',))
 @api_key_required
 def get_all():
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         shows_results = session.execute(
             select(VideoShow)
             .order_by(VideoShow.title.asc())

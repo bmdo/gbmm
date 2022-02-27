@@ -3,7 +3,7 @@ from flask import Blueprint
 
 from server.app.flask_helpers import json_data, bad_request, dump, FilterHelper, api_key_required
 from server.gb_api import GBAPI, SortDirection
-from server.database import Session, Video, from_api
+from server.database import SessionMaker, Video, from_api
 from . import downloads
 from config import config
 
@@ -92,7 +92,7 @@ def browse():
     page = videos_select.page(page)
     flask.session['videos_browse_metadata'] = videos_select.to_session_data()
 
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         videos = from_api(session, Video, page)
 
         video_tuples = [('video', v.id) for v in videos]
@@ -118,7 +118,7 @@ def get():
 
     videos = s.next()
 
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         return dump(from_api(session, Video, videos))
 
 
@@ -138,5 +138,5 @@ def get_one():
     if video is None:
         raise ValueError('Bad JSON.')
 
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         return dump(from_api(session, Video, video))

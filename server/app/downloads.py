@@ -1,7 +1,7 @@
 from flask import Blueprint, redirect, url_for
 from sqlalchemy import select, or_, asc
 from config import config
-from server.database import Session, Download, Video, from_api, from_api_generator
+from server.database import SessionMaker, Download, Video, from_api, from_api_generator
 from server.app.flask_helpers import bad_request, json_data, FilterHelper, dump, ListResultMetadata, api_key_required
 from server.downloader import downloader
 from server.gb_api import GBAPI
@@ -82,7 +82,7 @@ def filter_downloads(session):
 @api_key_required
 def get():
     try:
-        with Session.begin() as session:
+        with SessionMaker.begin() as session:
             results, metadata = filter_downloads(session)
             return dump(results.all(), metadata)
 
@@ -94,7 +94,7 @@ def get():
 @api_key_required
 def get_one():
     try:
-        with Session.begin() as session:
+        with SessionMaker.begin() as session:
             results, metadata = filter_downloads(session)
             return dump(results.first())
 
@@ -125,7 +125,7 @@ def get_for_objects(session, objects: list[tuple[str, int]]) -> list[Download]:
 @api_key_required
 def enqueue():
     try:
-        with Session.begin() as session:
+        with SessionMaker.begin() as session:
             # noinspection PyTypeChecker
             data = DownloadRequestData()
             # TODO accept more than videos?

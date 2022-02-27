@@ -5,7 +5,7 @@ from sqlalchemy import select
 
 from server.app.flask_helpers import ok, not_found, dump
 from server.gb_api import GBAPI
-from server.database import Session, Video, File, VideoShow, VideoCategory
+from server.database import SessionMaker, Video, File, VideoShow, VideoCategory
 from config import config
 
 bp = Blueprint('media', config.SERVER_NAME, url_prefix='/media')
@@ -13,7 +13,7 @@ bp = Blueprint('media', config.SERVER_NAME, url_prefix='/media')
 
 @bp.route('/recent', methods=('GET',))
 def recent():
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         shows = session.execute(
             select(Video)
             .order_by(Video.publish_date.desc())
@@ -24,7 +24,7 @@ def recent():
 
 @bp.route('/show/list', methods=('GET',))
 def show_list():
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         shows = session.execute(
             select(VideoShow)
         ).scalars().all()
@@ -33,7 +33,7 @@ def show_list():
 
 @bp.route('/show/<int:show_id>/videos', methods=('GET',))
 def show_videos(show_id: int):
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         videos = session.execute(
             select(Video)
             .filter_by(video_show_id=show_id)
@@ -44,7 +44,7 @@ def show_videos(show_id: int):
 
 @bp.route('/show/<int:show_id>/info', methods=('GET',))
 def show_info(show_id: int):
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         show = session.get(VideoShow, show_id)
         if show is None:
             return not_found(f'Show with ID {show_id} not found.')
@@ -53,7 +53,7 @@ def show_info(show_id: int):
 
 @bp.route('/category/list', methods=('GET',))
 def category_list():
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         shows = session.execute(
             select(VideoCategory)
         ).scalars().all()
@@ -62,7 +62,7 @@ def category_list():
 
 @bp.route('/category/<int:category_id>/videos', methods=('GET',))
 def category_videos(category_id: int):
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         videos = session.execute(
             select(Video)
             .filter_by(video_categories_id=category_id)
@@ -73,7 +73,7 @@ def category_videos(category_id: int):
 
 @bp.route('/category/<int:category_id>/info', methods=('GET',))
 def category_info(category_id: int):
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         category = session.get(VideoCategory, category_id)
         if category is None:
             return not_found(f'Show with ID {category_id} not found.')
@@ -82,7 +82,7 @@ def category_info(category_id: int):
 
 @bp.route('/video/<int:video_id>/file', methods=('GET',))
 def video_file(video_id: int):
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         video = session.get(Video, video_id)
         if video is None:
             return not_found(f'Video with ID {video_id} not found.')
@@ -94,7 +94,7 @@ def video_file(video_id: int):
 
 @bp.route('/video/<int:video_id>/info', methods=('GET',))
 def video_info(video_id: int):
-    with Session.begin() as session:
+    with SessionMaker.begin() as session:
         video = session.get(Video, video_id)
         if video is None:
             return not_found(f'Video with ID {video_id} not found.')
