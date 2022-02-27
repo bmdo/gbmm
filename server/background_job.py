@@ -81,8 +81,6 @@ class BackgroundJob(ABC):
         self.logger: logging.Logger = logging.getLogger('gbmm.BackgroundJob').getChild(self._logger_suffix)
         self.logger.debug(f'Created background job {self.__class__.__name__} with UUID {self.__uuid}.')
 
-        self.data = BackgroundJobData()
-
     @classmethod
     def get_all(cls: T, session: Session) -> list[T]:
         """
