@@ -155,12 +155,6 @@ class QuickIndexerBackgroundJob(IndexerBackgroundJob):
             else:
                 return self.fail(session)
 
-    def _resume(self):
-        pass
-
-    def _recover(self):
-        pass
-
 
 def start_full_indexer(session: Session):
 
