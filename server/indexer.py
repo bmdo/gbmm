@@ -40,14 +40,15 @@ class IndexerBackgroundJob(background_job.BackgroundJob, ABC):
                                   f'Results indexed so far this run: {self.progress_current(session)}. '
                                   f'Total results to index: {self.progress_denominator(session)}.')
 
-        if self._should_stop:
-            self.logger.info('Index refresh stopped.')
-            return self._stop_complete(session)
-        elif self._should_pause:
-            self.logger.info('Index refresh paused.')
-            return self._pause_complete(session)
-        else:
-            return self.complete(session)
+        with SessionMaker.begin() as session:
+            if self._should_stop:
+                self.logger.info('Index refresh stopped.')
+                return self._stop_complete(session)
+            elif self._should_pause:
+                self.logger.info('Index refresh paused.')
+                return self._pause_complete(session)
+            else:
+                return self.complete(session)
 
     def _run_indexer(self, resource_select: ResourceSelect):
         try:
