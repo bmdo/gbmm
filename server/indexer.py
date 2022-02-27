@@ -136,9 +136,9 @@ class QuickIndexerBackgroundJob(IndexerBackgroundJob):
         start_time = start_time.replace(microsecond=0).isoformat()
 
         end_time = datetime.now().replace(microsecond=0).isoformat()
-        filter_string = f'{start_time}|{end_time}'
+        filter_string = f'publish_date:{start_time}|{end_time}'
         self.resource_select = GBAPI.select('video') \
-            .filter(publish_date=filter_string) \
+            .filter(filter=filter_string) \
             .sort('id', SortDirection.ASC).limit(100).priority(RequestPriority.low)
 
         try:

@@ -4,7 +4,7 @@ from .resource import SingleResultResource, MultipleResultResource, Resource
 from server import database
 from ..response_metadata import ResponseMetadata
 
-ExtraFilters = list[Literal['publish_date', 'platforms', 'games', 'subscriber_only']]
+ExtraFilters = list[Literal['platforms', 'games', 'subscriber_only']]
 
 
 def new_collection_filters(extras: ExtraFilters):
@@ -16,10 +16,6 @@ def new_collection_filters(extras: ExtraFilters):
         ResourceFilter('sort', str),
         ResourceFilter('filter', str)
     ])
-    if 'publish_date' in extras:
-        filter_list.append(
-            ResourceFilter('publish_date', str)
-        )
     if 'platforms' in extras:
         filter_list.append(
             ResourceFilter('platforms', int)
@@ -330,7 +326,7 @@ class CollectionResourceFactoryCollection(ResourceFactoryCollection):
         #     collection_filters(game=True),
         #     api_objs.user_review
         # )
-        self.videos = MultipleResultResourceFactory(database.Video, extra_filters=['publish_date', 'subscriber_only'])
+        self.videos = MultipleResultResourceFactory(database.Video, extra_filters=['subscriber_only'])
         self.video_categories = MultipleResultResourceFactory(database.VideoCategory)
         self.video_shows = MultipleResultResourceFactory(database.VideoShow)
 
