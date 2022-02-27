@@ -51,7 +51,7 @@ class IndexerBackgroundJob(background_job.BackgroundJob, ABC):
 
     def _run_indexer(self, resource_select: ResourceSelect):
         try:
-            return self._run_indexer(resource_select)
+            return self.__run_inner(resource_select)
         except IndexerException:
             self.logger.error('Indexer job failed due to an exception raised by the indexer itself.')
             with SessionMaker.begin() as session:
