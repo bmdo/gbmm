@@ -40,14 +40,10 @@ class BackgroundJob(ABC):
     _recoverable: bool = False
     _logger_suffix: str = 'BackgroundJob'
 
-    def _run(self):
-        pass
-
-    def _resume(self):
-        pass
-
-    def _recover(self):
-        pass
+    #  Overridden with functions by inheriting classes
+    _run = None
+    _resume = None
+    _recover = None
 
     def __init__(self, session: Session, *, storage: BackgroundJobStorage = None):
         if storage is not None:
@@ -342,10 +338,10 @@ def register(cls: Type[BackgroundJob]):
 
     assert fn_run is not None and callable(fn_run), 'Background jobs must define a _run function.'
 
-    if fn_resume is not None:
+    if fn_resume is not None and callable(fn_resume):
         cls._pauseable = True
 
-    if fn_recover is not None:
+    if fn_recover is not None and callable(fn_recover):
         cls._recoverable = True
 
     cls._logger_suffix = cls.__name__
@@ -411,12 +407,12 @@ def get_all(session: Session,
 
 
 def startup(session: Session):
-    not_recoverable = get_all(session, recoverable=False)
-    for job_storage in not_recoverable:
-        job = get(session, job_uuid=job_storage.uuid)
+    not_recoverable = get_all(session, recoverable=False)  # First dispose of unrecoverable jobs.
+    for job in not_recoverable:
         job.fail(session)
-    for job_storage in session.query(BackgroundJobStorage).scalars().all():  # Everything left is recoverable
-        job = get(session, job_uuid=job_storage.uuid)
+
+    recoverable = get_all(session)  # Everything left is recoverable. Attempt to recover the remaining jobs.
+    for job in recoverable:
         job.recover(session)
 
 
