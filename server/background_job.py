@@ -340,7 +340,7 @@ def register(cls: Type[BackgroundJob]):
     fn_resume = getattr(cls, '_resume', None)
     fn_recover = getattr(cls, '_recover', None)
 
-    assert(fn_run is not None and callable(fn_run)), 'Background jobs must define a _run function.'
+    assert fn_run is not None and callable(fn_run), 'Background jobs must define a _run function.'
 
     if fn_resume is not None:
         cls._pauseable = True
