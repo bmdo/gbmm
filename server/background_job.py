@@ -321,17 +321,20 @@ class BackgroundJob(ABC):
         self.archive(session)
         return BackgroundJobControlReturnFlag(BackgroundJobState.Complete)
 
+    def state(self, session: Session):
+        return self.__get_storage(session).state
+
     def running(self, session: Session):
-        return self.__get_storage(session).state == BackgroundJobState.Running
+        return self.state(session) == BackgroundJobState.Running
 
     def stopped(self, session: Session):
-        return self.__get_storage(session).state == BackgroundJobState.Stopped
+        return self.state(session) == BackgroundJobState.Stopped
 
     def stopping(self):
         return self.__stop_requested
 
     def paused(self, session: Session):
-        return self.__get_storage(session).state == BackgroundJobState.Paused
+        return self.state(session) == BackgroundJobState.Paused
 
     def pausing(self):
         return self.__pause_requested

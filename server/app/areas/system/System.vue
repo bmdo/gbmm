@@ -2,7 +2,7 @@
     <div>
         <h1 class="display-3 mb-5">{{ areaTitle }}</h1>
         <div class="mb-5">
-            <h2 class="display-6 mb-5">Controls</h2>
+            <h2 class="display-6 mb-3">Controls</h2>
             <label class="me-3 form-label fw-500">Update Index</label>
             <small class="text-muted">Refresh the video index. A quick update pulls new videos since the last index update. A full update refreshes the full index. A full update can take several minutes.</small>
             <br>
@@ -12,7 +12,7 @@
             <icon-button :click="() => updateIndex('full')" :icon="'arrow-clockwise'" :text="'Full Update'" class="btn-outline-primary me-2"></icon-button>
         </div>
         <div>
-            <h2 class="display-6 mb-5">Settings</h2>
+            <h2 class="display-6 mb-3">Settings</h2>
             <setting-group :group="generalGroup"></setting-group>
             <setting-group v-for="group in definedGroups" :group="group" :key="group.id"></setting-group>
             <icon-button :click="save" :icon="'check2'" :text="'Save Changes'" :class="{disabled: !modified}" class="btn-primary float-end"></icon-button>

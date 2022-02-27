@@ -59,6 +59,30 @@ def run_first_time_setup():
         return ok()
 
 
+@bp.route('/get-indexer-state', methods=('GET',))
+def get_indexer_state():
+    out = {
+        'active': False,
+        'uuid': None,
+        'type': None,
+        'state': None,
+        'progress_current': None,
+        'progress_denominator': None
+    }
+
+    with SessionMaker.begin() as session:
+        job = indexer.get_active_job(session)
+        if job is not None:
+            out['active'] = True
+            out['uuid'] = str(job.uuid)
+            out['state'] = job.state(session)
+            out['type'] = 'quick' if job.__class__.__name__ == 'QuickIndexerBackgroundJob' else 'full'
+            out['progress_current'] = job.progress_current(session)
+            out['progress_denominator'] = job.progress_denominator(session)
+
+    return out
+
+
 @bp.route('/update-index', methods=('POST',))
 def update_index():
     data = json_data()
