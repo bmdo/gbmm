@@ -119,6 +119,7 @@ class BackgroundJob(ABC):
             self.logger.debug(f'Starting background job {name} with UUID {uuident}.')
             self.__thread = threading.Thread(target=self._run, name=name, daemon=True)
             self.__thread.start()
+            storage.thread = self.__thread.ident
             self.logger.debug(f'Background job started on thread {self.__thread.ident}.')
 
     def resume(self, session: Session):
@@ -147,7 +148,40 @@ class BackgroundJob(ABC):
             self.logger.debug(f'Resuming background job {name} with UUID {uuident}.')
             self.__thread = threading.Thread(target=self._resume, name=name, daemon=True)
             self.__thread.start()
+            storage.thread = self.__thread.ident
             self.logger.debug(f'Background job started on thread {self.__thread.ident}.')
+
+    def recover(self, session: Session):
+        """
+        Recover from system restart.
+
+        :param session: A SQLAlchemy session
+        """
+        with self.__thread_lock:
+            storage = self.__get_storage(session)
+            name = storage.name
+            uuident = storage.uuid
+
+            if not self._recoverable:
+                self.logger.warning(f'Recover requested for background job {name} with UUID {uuident}, but the '
+                                    f'job is of a type that is not recoverable.')
+                raise BackgroundJobException()
+
+            if self.stopped(session) or self.__stop_requested:
+                self.logger.warning(f'Recover requested for background job {name} with UUID {uuident}, but the '
+                                    f'job was stopped and cannot be recovered.')
+                raise BackgroundJobException()
+
+            if self.running(session) or self.paused(session):
+                storage.state = BackgroundJobState.Running
+                self.logger.debug(f'Recovering background job {name} with UUID {uuident}.')
+                self.__thread = threading.Thread(target=self._recover, name=name, daemon=True)
+                self.__thread.start()
+                storage.thread = self.__thread.ident
+                self.logger.debug(f'Background job started on thread {self.__thread.ident}.')
+
+            else:  # Probably never started
+                raise BackgroundJobException()
 
     def pause(self, session: Session):
         with self.__thread_lock:
@@ -198,37 +232,6 @@ class BackgroundJob(ABC):
             self.logger.debug(f'Stop requested for background job {name} with UUID {uuident} running on thread'
                               f'{self.__thread.ident}.')
 
-    def recover(self, session: Session):
-        """
-        Recover from system restart.
-
-        :param session: A SQLAlchemy session
-        """
-        with self.__thread_lock:
-            storage = self.__get_storage(session)
-            name = storage.name
-            uuident = storage.uuid
-
-            if not self._recoverable:
-                self.logger.warning(f'Recover requested for background job {name} with UUID {uuident}, but the '
-                                    f'job is of a type that is not recoverable.')
-                raise BackgroundJobException()
-
-            if self.stopped(session) or self.__stop_requested:
-                self.logger.warning(f'Recover requested for background job {name} with UUID {uuident}, but the '
-                                    f'job was stopped and cannot be recovered.')
-                raise BackgroundJobException()
-
-            if self.running(session) or self.paused(session):
-                storage.state = BackgroundJobState.Running
-                self.logger.debug(f'Recovering background job {name} with UUID {uuident}.')
-                self.__thread = threading.Thread(target=self._recover, name=name, daemon=True)
-                self.__thread.start()
-                self.logger.debug(f'Background job started on thread {self.__thread.ident}.')
-
-            else:  # Probably never started
-                raise BackgroundJobException()
-
     def archive(self, session: Session):
         with self.__thread_lock:
             storage = self.__get_storage(session)
@@ -270,7 +273,9 @@ class BackgroundJob(ABC):
 
     def _pause_complete(self, session: Session):
         self.__pause_requested = False
-        self.__get_storage(session).state = BackgroundJobState.Paused
+        storage = self.__get_storage(session)
+        storage.state = BackgroundJobState.Paused
+        storage.thread = None
 
     @property
     def _should_stop(self):
@@ -278,7 +283,9 @@ class BackgroundJob(ABC):
 
     def _stop_complete(self, session: Session):
         self.__stop_requested = False
-        self.__get_storage(session).state = BackgroundJobState.Stopped
+        storage = self.__get_storage(session)
+        storage.state = BackgroundJobState.Stopped
+        storage.thread = None
         self.archive(session)
 
     def running(self, session: Session):
