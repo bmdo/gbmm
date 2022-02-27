@@ -2,7 +2,7 @@ import Vue from 'vue';
 import VueRouter, {RouteConfig} from "vue-router";
 import Home from "./home/Home.vue";
 import VideosBrowse from "./videos/VideosBrowse.vue";
-import Settings from "./settings/Settings.vue";
+import System from "./system/System.vue";
 import VideosDetail from "./videos/VideosDetail.vue";
 import DownloadsQueue from "./downloads/components/DownloadsQueue.vue";
 import DownloadsHistory from "./downloads/components/DownloadsHistory.vue";
@@ -38,7 +38,7 @@ const routes: RouteConfig[] = [
     },
 
     //Settings
-    {path: '/settings', component: Settings}
+    {path: '/system', component: System}
 ];
 
 export const router = new VueRouter({

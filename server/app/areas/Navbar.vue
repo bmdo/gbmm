@@ -17,7 +17,7 @@
                 <ul class="navbar-nav mb-2 mb-lg-0">
                     <li class="nav-item">
                         <!-- TODO active link and settings link -->
-                        <router-link to="/settings" class="nav-link">Settings</router-link>
+                        <router-link to="/system" class="nav-link">System</router-link>
                     </li>
                 </ul>
             </div>
