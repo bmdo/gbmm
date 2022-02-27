@@ -201,8 +201,8 @@ class BackgroundJobStorage(Base):
     'The number that represents the current progress of the BackgroundJob.'
 
 
-class BackgroundJobArchive(Base):
-    __tablename__ = 'background_job_archives'
+class BackgroundJobHistory(Base):
+    __tablename__ = 'background_job_history'
     uuid = Column(String, primary_key=True)
     'The unique identifier for this BackgroundJob.'
     name = Column(String)

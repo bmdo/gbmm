@@ -10,7 +10,7 @@ import uuid
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from server.database import BackgroundJobStorage, BackgroundJobArchive
+from server.database import BackgroundJobStorage, BackgroundJobHistory
 
 BackgroundJobState = BackgroundJobStorage.BackgroundJobState
 
@@ -255,7 +255,7 @@ class BackgroundJob(ABC):
     def archive(self, session: Session):
         with self.__thread_lock:
             storage = self.__get_storage(session)
-            archive = BackgroundJobArchive(
+            archive = BackgroundJobHistory(
                 uuid=storage.uuid,
                 name=storage.name,
                 created=storage.created,
