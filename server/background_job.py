@@ -248,6 +248,12 @@ class BackgroundJob(ABC):
             session.add(archive)
             session.query(BackgroundJobStorage).filter_by(uuid=storage.uuid).delete()
 
+    def complete(self, session: Session):
+        with self.__thread_lock:
+            storage = self.__get_storage(session)
+            storage.state = BackgroundJobState.Complete
+            self.archive(session)
+
     def fail(self, session: Session):
         with self.__thread_lock:
             storage = self.__get_storage(session)
