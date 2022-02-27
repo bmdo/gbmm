@@ -21,6 +21,27 @@ class BackgroundJobException(RuntimeError):
     pass
 
 
+class BackgroundJobControlReturnFlag:
+    def __init__(self, state: BackgroundJobState):
+        self.__state = state
+
+    @property
+    def paused(self):
+        return self.__state == BackgroundJobState.Paused
+
+    @property
+    def stopped(self):
+        return self.__state == BackgroundJobState.Stopped
+
+    @property
+    def complete(self):
+        return self.__state == BackgroundJobState.Complete
+
+    @property
+    def failed(self):
+        return self.__state == BackgroundJobState.Failed
+
+
 class BackgroundJobData:
     def __init__(self):
         self.__data: dict = {}
@@ -250,15 +271,20 @@ class BackgroundJob(ABC):
 
     def complete(self, session: Session):
         with self.__thread_lock:
+            self.logger.debug(f'Background job with UUID {self.__uuid} completed.')
             storage = self.__get_storage(session)
             storage.state = BackgroundJobState.Complete
             self.archive(session)
+            return BackgroundJobControlReturnFlag(BackgroundJobState.Complete)
 
     def fail(self, session: Session):
         with self.__thread_lock:
+            self.logger.error(f'Background job with UUID {self.__uuid} failed.')
             storage = self.__get_storage(session)
             storage.state = BackgroundJobState.Failed
             self.archive(session)
+            return BackgroundJobControlReturnFlag(BackgroundJobState.Failed)
+
 
     def __get_storage(self, session: Session):
         storage = session.query(BackgroundJobStorage).get(str(self.__uuid))
@@ -281,6 +307,7 @@ class BackgroundJob(ABC):
         storage = self.__get_storage(session)
         storage.state = BackgroundJobState.Paused
         storage.thread = None
+        return BackgroundJobControlReturnFlag(BackgroundJobState.Paused)
 
     @property
     def _should_stop(self):
@@ -292,6 +319,7 @@ class BackgroundJob(ABC):
         storage.state = BackgroundJobState.Stopped
         storage.thread = None
         self.archive(session)
+        return BackgroundJobControlReturnFlag(BackgroundJobState.Complete)
 
     def running(self, session: Session):
         return self.__get_storage(session).state == BackgroundJobState.Running

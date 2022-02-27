@@ -18,14 +18,13 @@ class IndexerException(RuntimeError):
 
 
 class IndexerBackgroundJob(background_job.BackgroundJob, ABC):
-    def _run_indexer(self, resource_select: ResourceSelect) -> bool:
+    def __run_inner(self, resource_select: ResourceSelect) -> bool:
         """
         Run the indexer.
 
         :param resource_select: A ResourceSelect that will be used to query the GBAPI for new items to index.
         :return:
         """
-        success = False
 
         while not resource_select.is_last_page and not self._should_stop and not self._should_pause:
             resource_select.next()
@@ -43,14 +42,32 @@ class IndexerBackgroundJob(background_job.BackgroundJob, ABC):
 
         if self._should_stop:
             self.logger.info('Index refresh stopped.')
-            self._stop_complete(session)
+            return self._stop_complete(session)
         elif self._should_pause:
             self.logger.info('Index refresh paused.')
-            self._pause_complete(session)
+            return self._pause_complete(session)
         else:
-            success = True
+            return self.complete(session)
 
-        return success
+    def _run_indexer(self, resource_select: ResourceSelect):
+        try:
+            return self._run_indexer(resource_select)
+        except IndexerException:
+            self.logger.error('Indexer job failed due to an exception raised by the indexer itself.')
+            with SessionMaker.begin() as session:
+                return self.fail(session)
+        except SQLAlchemyError:
+            self.logger.error('Indexer job failed due to an exception raised by the database.')
+            with SessionMaker.begin() as session:
+                return self.fail(session)
+        except AttributeError:
+            self.logger.error('Could not run Indexer job because the API resource is not initialized.')
+            with SessionMaker.begin() as session:
+                return self.fail(session)
+        except:
+            self.logger.error('Indexer job failed due to an unknown exception.')
+            with SessionMaker.begin() as session:
+                return self.fail(session)
 
 
 @background_job.register
@@ -59,11 +76,13 @@ class FullIndexerBackgroundJob(IndexerBackgroundJob):
         """
         Start an index refresh that indexes all videos.
         """
+
         self.resource_select = self.data.get('resource_select')
         # Loop over all videos available on the Giant Bomb website and add their info to the local database.
         self.resource_select = GBAPI.select('video').sort('id', SortDirection.ASC).limit(100).priority(
             RequestPriority.low)
-        self.__run_inner()
+
+        self.__run_2()
 
     def _resume(self):
         """
@@ -71,33 +90,20 @@ class FullIndexerBackgroundJob(IndexerBackgroundJob):
         """
 
         self.logger.info(f'Resuming the full indexer run.')
-        self.__run_inner()
+        self.__run_2()
 
     def _recover(self):
         self.logger.info(f'Recovering the full indexer run.')
         # ENHANCE Make this smarter instead of starting from the beginning
         self._run()
 
-    def __run_inner(self):
-        success = False
-
-        try:
-            success = self._run_indexer(self.resource_select)
-        except IndexerException or SQLAlchemyError:
-            self.logger.error('Indexer job failed due to an exception.')
-            success = False
-        except AttributeError:
-            self.logger.error('Could not run Indexer job because the API resource is not initialized.')
-            success = False
-        finally:
+    def __run_2(self):
+        flag = self._run_indexer(self.resource_select)
+        if flag.complete:
             with SessionMaker.begin() as session:
-                if success:
-                    # Mark now as the last time we ran the quick indexer
-                    SystemState.get(session).indexer_full__last_update = datetime.now()
-                    self.logger.info(f'Completed full indexer run.')
-                    return self.complete(session)
-                else:
-                    return self.fail(session)
+                # Mark now as the last time we ran the quick indexer
+                SystemState.get(session).indexer_full__last_update = datetime.now()
+                self.logger.info(f'Completed full indexer run.')
 
 
 @background_job.register
@@ -141,19 +147,13 @@ class QuickIndexerBackgroundJob(IndexerBackgroundJob):
             .filter(filter=filter_string) \
             .sort('id', SortDirection.ASC).limit(100).priority(RequestPriority.low)
 
-        try:
-            success = self._run_indexer(self.resource_select)
-        except IndexerException or SQLAlchemyError:
-            success = False
+        flag = self._run_indexer(self.resource_select)
 
-        with SessionMaker.begin() as session:
-            if success:
+        if flag.complete:
+            with SessionMaker.begin() as session:
                 # Mark now as the last time we ran the quick indexer
                 SystemState.get(session).indexer_quick__last_update = datetime.now()
                 self.logger.info(f'Completed quick indexer run.')
-                return self.complete(session)
-            else:
-                return self.fail(session)
 
 
 def start_full_indexer(session: Session):
