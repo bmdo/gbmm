@@ -174,8 +174,8 @@ class BackgroundJobStorage(Base):
         NotStarted = 0
         Running = 1
         Paused = 2
-        Stopped = 3
-        Complete = 4
+        Complete = 3
+        Stopped = 4
         Failed = 5
 
     __tablename__ = 'background_jobs'
