@@ -1,3 +1,5 @@
+import datetime
+
 import server.indexer as indexer
 import server.background_job as background_job
 
@@ -67,7 +69,8 @@ def get_indexer_state():
         'type': None,
         'state': None,
         'progress_current': None,
-        'progress_denominator': None
+        'progress_denominator': None,
+        'last_update': None
     }
 
     with SessionMaker.begin() as session:
@@ -79,6 +82,20 @@ def get_indexer_state():
             out['type'] = 'quick' if job.__class__.__name__ == 'QuickIndexerBackgroundJob' else 'full'
             out['progress_current'] = job.progress_current(session)
             out['progress_denominator'] = job.progress_denominator(session)
+
+        system_state = SystemState.get(session)
+        last_full_update = system_state.indexer_full__last_update
+        last_quick_update = system_state.indexer_quick__last_update
+
+        if not (last_full_update is None and last_quick_update is None):
+            if last_full_update is None:
+                last_full_update = datetime.datetime(0, 0, 0)
+            if last_quick_update is None:
+                last_quick_update = datetime.datetime(0, 0, 0)
+            if (last_full_update - last_quick_update).total_seconds() > 0:
+                out['last_update'] = last_full_update
+            else:
+                out['last_update'] = last_quick_update
 
     return out
 
